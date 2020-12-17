@@ -17,25 +17,76 @@ namespace {
 		//define derivate from a FunctionPass class
 		LoopPerforationPass() : FunctionPass(ID) {}
 
-		bool isPerforable(Function &F, Loop *loop){
+		bool isPerforable(Function &llvm_function, Loop *loop){
 
+			//check if loop is simple
+			if (!loop->isLoopSimplifyForm()) {
+				return false;
+			}
+
+			//get the PHI node correspondent to the canonical induction variable
+			PHINode *PHI = loop->getCanonicalInductionVariable();
+
+			//if it's null
+			if (PHI == nullptr) {
+				return false;
+			}
+
+			//"find where the induction variable is modified by finding a user that
+    		// is also an incoming value to the phi"
+
+			//users: return the return the related instructions that uses the actual instruction
+			//incoming values: return the instruction operands
+
+			//define a variable 'value to change'
+			Value *value_to_change = nullptr;
+
+			//foreach user from PHI 
+			for (auto User : PHI->users()) {
+				//foreach incoming value from PHI
+				for (auto &incoming : PHI->incoming_values()) {
+					//if matches, store the instruction and break
+					if (incoming == User) {
+						value_to_change = incoming;
+						break; 
+					}
+				}
+			}
+			
+			if (value_to_change == nullptr) {
+				return false;
+			}
+
+			if (!llvm::dyn_cast<llvm::BinaryOperator>(value_to_change)) {
+				return false;
+			}
+
+			return true;
 		}
 
-		void handleLoop(Function &F, Loop *loop){
-			if(isPerforable(F, loop))
+		void handleLoop(Function &llvm_function, Loop *loop){
+			//check if the actual loop is a good candidate to perforate
+			if(isPerforable(llvm_function, loop))
 				errs() << "That's a perforable loop!" << "!\n";
-
+			
+			//check also the subloops into each loop
 			for(Loop *sub_loop : loop->getSubLoops()){
-				handleLoop(F, sub_loop);
+				handleLoop(llvm_function, sub_loop);
 			}
 		}
 
-		virtual bool runOnFunction(Function &F){
-			errs() << "I saw a function called " << F.getName() << "!\n";
+		void getAnalysisUsage(AnalysisUsage &AU) const {
+			AU.addRequired<LoopInfoWrapperPass>();
+			//AU.addRequiredID(LoopSimplifyID);
+		}
+		
+		virtual bool runOnFunction(Function &llvm_function){
+			errs() << "I saw a function called " << llvm_function.getName() << "!\n";
 			
 			LoopInfo &loop_info = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+			//handle the loops into every function
 			for(auto &loop : loop_info){
-				handleLoop(F, loop);
+				handleLoop(llvm_function, loop);
 			}
 
 			return false;	    
