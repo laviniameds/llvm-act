@@ -1,7 +1,12 @@
 #!/bin/bash
 
 # build project
-mkdir build && cd build/ && cmake .. && make && cd .. && echo ""\
+#check if directory 'build' exists, if true: proceeds, else: create directory
+if [ -d build ]; then :  
+else mkdir build 
+fi 
+
+cd build/ && cmake .. && make && cd .. && echo ""\
 
 # testing pass
 src=$1
