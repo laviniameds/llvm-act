@@ -22,14 +22,14 @@ clang-10 -Wall $src -o $src_name
 
 #run the perforation pass and get the modified example
 
-# # pass testing 
-# clang-10 -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${obj}
+# run pass 
+clang-10 -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${obj}
 
-# opt-10 -S -mem2reg ${obj} > ${opt}
+opt-10 -S -mem2reg ${obj} > ${opt}
 
-# #opt -analyze -dot-cfg ${opt}
+#opt -analyze -dot-cfg ${opt}
 
-# opt-10 -load build/loop-perforation/libLoopPerforationPass.so -loop-perforation < ${opt} > /dev/null
+opt-10 -load build/loop-perforation/libLoopPerforationPass.so -loop-perforation < ${opt} > /dev/null
 
 #TODO
 #run modified example and generates the 'perforrated' result
