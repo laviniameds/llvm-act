@@ -27,9 +27,9 @@ clang-10 -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${obj}
 
 opt-10 -S -mem2reg ${obj} > ${opt}
 
-#opt -analyze -dot-cfg ${opt}
-
 opt-10 -load build/loop-perforation/libLoopPerforationPass.so -loop-perforation < ${opt} > /dev/null
+
+#opt-10 ${opt} -loops -analyze
 
 #TODO
 #run modified example and generates the 'perforrated' result
