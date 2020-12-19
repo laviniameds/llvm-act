@@ -8,11 +8,11 @@ fi
 # build project
 cd build/ && cmake .. && make && cd .. && echo ""\
 
+#define variables
 src=$1
 src_name=${1%.c}
 standard=${1%/*.c}/results/standard
 perforrated=${1%/*.c}/results/perforrated
-
 obj=${1%.c}.ll
 opt=${1%.c}.opt.ll
 
