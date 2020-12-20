@@ -11,8 +11,8 @@ cd build/ && cmake .. && make && cd .. && echo ""\
 #define variables
 src=$1
 src_name=${1%.c}
-standard=${1%/*.c}/results/standard
-perforrated=${1%/*.c}/results/perforrated
+standard=${1%/*.c}/results/standard.txt
+perforrated=${1%/*.c}/results/perforrated.txt
 limit_path=${1%/*.c}/config/limit.txt
 obj=${1%.c}.ll
 opt=${1%.c}.opt.ll
