@@ -12,5 +12,5 @@ float error(float standard, float perforated){
 int main(int argc, char const *argv[]) {
     float standard, perforated;
     scanf("%f%f", &standard, &perforated);
-    printf("%.2f\n", error(standard, perforated));
+    printf("%2f\n", error(standard, perforated));
 }
