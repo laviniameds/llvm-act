@@ -4,9 +4,14 @@
 #include "fstream"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
+#include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
 using namespace std;
+
+static cl::opt<int> InputLoopRate("loop_rate", 
+cl::desc("Specify input loop_rate for mypass"), 
+cl::value_desc("loop_rate"));
 
 namespace {
 	//define llvm pass
@@ -121,7 +126,7 @@ namespace {
 					if (Op == PHI) continue;
 
 					int loop_rate = 1;
-					//loop_rate = 
+					loop_rate = InputLoopRate.getValue();
 					Type *ConstType = Op->getType();
 					Constant *NewInc = ConstantInt::get(ConstType, loop_rate /*value*/, true /*issigned*/);
 
