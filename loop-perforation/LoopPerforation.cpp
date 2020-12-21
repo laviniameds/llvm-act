@@ -86,7 +86,7 @@ namespace {
 		void processLoop(Function &llvm_function, Loop *loop){
 			//check if the actual loop is a good candidate to perforate
 			if(isPerforable(llvm_function, loop)){
-				errs() << "That's a perforable loop!" << "!\n";
+				//errs() << "That's a perforable loop!" << "!\n";
 				f_loop_map.insert({loop, &llvm_function});
 			}
 			
@@ -132,7 +132,7 @@ namespace {
 					Type *ConstType = op->getType();
 					Constant *NewInc = ConstantInt::get(ConstType, loop_rate /*value*/, true /*issigned*/);
 
-					errs() << "Changing [" << *op << "] to [" << *NewInc << "]!\n";
+					//errs() << "Changing [" << *op << "] to [" << *NewInc << "]!\n";
 
 					op = NewInc;
 				}	
@@ -141,7 +141,7 @@ namespace {
 		}
 		
 		virtual bool runOnFunction(Function &llvm_function){
-			errs() << "I saw a function called " << llvm_function.getName() << "!\n";
+			//errs() << "I saw a function called " << llvm_function.getName() << "!\n";
 			
 			f_loop_map.clear();
 
