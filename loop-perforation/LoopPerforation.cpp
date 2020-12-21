@@ -9,8 +9,9 @@
 using namespace llvm;
 using namespace std;
 
+//get input loop rate from command line
 static cl::opt<int> InputLoopRate("loop_rate", 
-cl::desc("Specify input loop_rate for mypass"), 
+cl::desc("Specify input loop_rate for Loop Perforation Pass"), 
 cl::value_desc("loop_rate"));
 
 namespace {
@@ -121,18 +122,19 @@ namespace {
 					}
 				}	
 				
-				BinaryOperator *Increment = dyn_cast<BinaryOperator>(value_to_change);
-				for (auto &Op : Increment->operands()) {
-					if (Op == PHI) continue;
+				//replace induction variable with new value 'loop rate'
+				BinaryOperator *i = dyn_cast<BinaryOperator>(value_to_change);
+				for (auto &op : i->operands()) {
+					if (op == PHI) continue;
 
 					int loop_rate = 1;
 					loop_rate = InputLoopRate.getValue();
-					Type *ConstType = Op->getType();
+					Type *ConstType = op->getType();
 					Constant *NewInc = ConstantInt::get(ConstType, loop_rate /*value*/, true /*issigned*/);
 
-					errs() << "Changing [" << *Op << "] to [" << *NewInc << "]!\n";
+					errs() << "Changing [" << *op << "] to [" << *NewInc << "]!\n";
 
-					Op = NewInc;
+					op = NewInc;
 				}	
 
 			}				
