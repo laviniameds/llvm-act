@@ -13,7 +13,7 @@ src=$1
 src_name=${1%.c}
 standard=${1%/*.c}/results/standard.txt
 perforated=${1%/*.c}/results/perforated.txt
-limit_path=${1%/*.c}/config/limit.txt
+rates_path=${1%/*.c}/config/rates.txt
 perf=${1%/*.c}/perf_options/perf.c
 merged_results=${1%/*.c}/perf_options/merged_results.txt
 obj=${1%.c}.ll
@@ -24,10 +24,13 @@ final_results=${1%/*.c}/results/final_results.txt
 
 #run the example and generate the 'standard' result
 clang-10 -Wall $src -o $src_name
-./$src_name < $limit_path > $standard
-limit=$(<${limit_path})
+./$src_name > $standard
 standard_result=$(<${standard})
 
+#get rates from file
+rates=$(<${rates_path})
+
+#init final results file
 if [ -e $final_results ]; then 
     > $final_results
     echo -e "--- RESULTS: ---\n" >> $final_results
@@ -41,7 +44,7 @@ clang-10 -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${obj}
 opt-10 -S -mem2reg ${obj} > ${opt}
 
 #test perforation
-for (( i=1; i<=$limit; i+=1 ))
+for i in $rates
 do
     perf_option=${perf%.c}_${i}.opt.ll
     perf_option_name=${perf%.c}_${i}
@@ -52,7 +55,7 @@ do
     clang-10 -Wall $perf_option -o $perf_option_name
 
     #get perforated result
-    perf_result=$(./$perf_option_name < $limit_path)
+    perf_result=$(./$perf_option_name)
     #merge standard and perforated results
     echo "$standard_result $perf_result" > $merged_results
 
