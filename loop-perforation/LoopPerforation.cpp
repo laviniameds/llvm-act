@@ -51,7 +51,7 @@ namespace {
 			//"find where the induction variable is modified by finding a user that
     		// is also an incoming value to the phi"
 
-			//users: return the return the related instructions that uses the actual instruction
+			//users: return the related instructions that uses the actual instruction
 			//incoming values: return the instruction operands
 
 			//define a variable 'value to change'
