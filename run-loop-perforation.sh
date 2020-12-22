@@ -48,7 +48,6 @@ for i in $rates
 do
     perf_option=${perf%.c}_${i}.opt.ll
     perf_option_name=${perf%.c}_${i}
-    #perforated_option=${perforated%.txt}_$i.txt
 
     #generate perforated code variants
     opt-10 -S -load build/loop-perforation/libLoopPerforationPass.so -loop-perforation -loop_rate=$i < ${opt} > ${perf_option}
@@ -67,5 +66,3 @@ do
     echo -e "STANDARD RESULT: $standard_result --- PERFORATED RESULT: $perf_result" >> $final_results
     echo -e "ERROR RATIO: $error_ratio\n\n" >> $final_results
 done
-
-#opt-10 ${opt} -loops -analyze
