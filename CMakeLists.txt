@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1)
-project(LoopPerforation)
+project(llvm-act)
 
 # support C++14 features used by LLVM 10.0.0
 set(CMAKE_CXX_STANDARD 14)
@@ -10,3 +10,4 @@ include_directories(${LLVM_INCLUDE_DIRS})
 link_directories(${LLVM_LIBRARY_DIRS})
 
 add_subdirectory(loop-perforation)  # Use your pass name here.
+add_subdirectory(data-sampling)
