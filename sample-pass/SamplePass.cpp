@@ -8,11 +8,11 @@ using namespace std;
 
 namespace {
 	//define llvm pass
-	struct DataSamplingPass : public FunctionPass {
+	struct SamplePass : public FunctionPass {
 		//define pass ID
 		static char ID;
 		//define derivate from a FunctionPass class
-		DataSamplingPass() : FunctionPass(ID) {}
+		SamplePass() : FunctionPass(ID) {}
 
 		virtual bool runOnFunction(Function &llvm_function){
 			errs() << "I saw a function called " << llvm_function.getName() << "!\n";
@@ -23,6 +23,6 @@ namespace {
 
 } // namespace llvm
 
-char DataSamplingPass::ID = 0;
+char SamplePass::ID = 0;
 
-static RegisterPass<DataSamplingPass> X("data-sampling", "DataSampling Pass");
+static RegisterPass<SamplePass> X("sample-pass", "Sample Pass");

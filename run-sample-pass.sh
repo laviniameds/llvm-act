@@ -17,4 +17,4 @@ clang-10 -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${obj}
 
 opt-10 -S -mem2reg ${obj} > ${opt}
 
-opt-10 -load build/data-sampling/libDataSamplingPass.so -data-sampling < ${opt} > /dev/null
+opt-10 -load build/sample-pass/libSamplePass.so -sample-pass < ${opt} > /dev/null
