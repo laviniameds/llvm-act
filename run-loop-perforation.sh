@@ -42,6 +42,8 @@ fi
 clang-10 -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${obj}
 # drop memory accesses
 opt-10 -S -mem2reg ${obj} > ${opt}
+opt-10 -regions -analyze ${opt}
+opt-10 -view-regions-only -analyze ${opt}
 
 # test perforation
 for i in $rates
