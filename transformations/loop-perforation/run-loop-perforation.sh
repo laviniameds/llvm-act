@@ -23,7 +23,7 @@ error_metrics_name=${error_metrics%.c}
 final_results=${1%/*.c}/results/final_results.txt
 
 # run the example and generate the 'standard' result
-clang-10 -Wall $src -o $src_name
+clang-12 -Wall $src -o $src_name
 ./$src_name > $standard
 standard_result=$(<${standard})
 
@@ -39,11 +39,11 @@ else
 fi 
 
 # run pass 
-clang-10 -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${obj}
+clang-12 -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${obj}
 # drop memory accesses
-opt-10 -S -mem2reg ${obj} > ${opt}
-opt-10 -regions -analyze ${opt}
-opt-10 -view-regions-only -analyze ${opt}
+opt-12 -S -mem2reg ${obj} > ${opt}
+#opt-12 -regions -analyze ${opt}
+#opt-12 -view-regions-only -analyze ${opt}
 
 # test perforation
 for i in $rates
@@ -52,8 +52,8 @@ do
     perf_option_name=${perf%.c}_${i}
 
     # generate perforated code variants
-    opt-10 -S -load build/loop-perforation/libLoopPerforationPass.so -loop-perforation -loop_rate=$i < ${opt} > ${perf_option}
-    clang-10 -Wall $perf_option -o $perf_option_name
+    opt-12 -S -load build/loop-perforation/libLoopPerforationPass.so -loop-perforation -loop_rate=$i < ${opt} > ${perf_option}
+    clang-12 -Wall $perf_option -o $perf_option_name
 
     # get perforated result
     perf_result=$(./$perf_option_name)
@@ -61,7 +61,7 @@ do
     echo "$standard_result $perf_result" > $merged_results
 
     # test error metrics function
-    clang-10 -Wall ${error_metrics} -o ${error_metrics_name}
+    clang-12 -Wall ${error_metrics} -o ${error_metrics_name}
     error_ratio=$(./$error_metrics_name < $merged_results)
 
     echo -e "LOOP RATE: $i" >> $final_results
