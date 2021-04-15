@@ -13,8 +13,8 @@ src=$1
 obj=${1%.c}.ll
 opt=${1%.c}.opt.ll
 
-clang-10 -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${obj}
+clang-12 -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${obj}
 
-opt-10 -S -mem2reg ${obj} > ${opt}
+opt-12 -S -mem2reg ${obj} > ${opt}
 
-opt-10 -load build/sample-pass/libSamplePass.so -sample-pass < ${opt} > /dev/null
+opt-12 -load build/analysis/libProfiling.so -profiling < ${opt} > /dev/null

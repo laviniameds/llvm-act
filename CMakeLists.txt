@@ -10,4 +10,4 @@ include_directories(${LLVM_INCLUDE_DIRS})
 link_directories(${LLVM_LIBRARY_DIRS})
 
 add_subdirectory(transformations/loop-perforation)  # Use your pass name here.
-# add_subdirectory(sample-pass)
+add_subdirectory(analysis/profiling)

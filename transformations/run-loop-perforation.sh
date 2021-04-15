@@ -52,7 +52,7 @@ do
     perf_option_name=${perf%.c}_${i}
 
     # generate perforated code variants
-    opt-12 -S -load build/loop-perforation/libLoopPerforationPass.so -loop-perforation -loop_rate=$i < ${opt} > ${perf_option}
+    opt-12 -S -load build/transformations/loop-perforation/libLoopPerforationPass.so -loop-perforation -loop_rate=$i < ${opt} > ${perf_option}
     clang-12 -Wall $perf_option -o $perf_option_name
 
     # get perforated result

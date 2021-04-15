@@ -8,20 +8,27 @@ using namespace llvm;
 
 namespace {
 	//define llvm pass
-	struct SamplePass : public ModulePass {
+	struct Profiling : public ModulePass {
 		//define pass ID
 		static char ID;
 		//define derivate from a FunctionPass class
-		SamplePass() : ModulePass(ID) {}
+		Profiling() : ModulePass(ID) {}
 
 		std::deque<Region *> RQ;
 
-		void SamplePass::getAnalysisUsage(AnalysisUsage &Info) const {
+		void Profiling::getAnalysisUsage(AnalysisUsage &Info) const {
 			Info.addRequired<RegionInfoPass>();
 			Info.setPreservesAll();
 		}
 
-		 // Recurse through all subregions and all regions  into RQ.
+		bool isValidInst(Instruction &instruction){
+			if(instruction.isDebugOrPseudoInst())
+				return false;
+			if (instruction.isBinaryOp())
+				return true;
+		}
+
+		// Recurse through all subregions and all regions  into RQ.
 		static void addRegionIntoQueue(Region &R, std::deque<Region *> &RQ) {
 			RQ.push_back(&R);
 			for (const auto &E : R)
@@ -29,8 +36,13 @@ namespace {
 		}
 
 		void runOnBasicBlocks(Region *R){
-			for (const auto *basic_block : R->blocks()){
-				//TODO
+			for (auto *basic_block : R->blocks()){
+				for(auto &instruction : basic_block->getInstList()){
+					//check if instruction is valid to approximate
+					if (isValidInst(instruction)){
+						//
+					}
+				}
 			}
 		}
 
@@ -54,11 +66,11 @@ namespace {
 			runOnRegions(RQ);
 
 			return false;	    
-		}				
+		}			
 	};
 
 } // namespace llvm
 
-char SamplePass::ID = 0;
+char Profiling::ID = 0;
 
-static RegisterPass<SamplePass> X("sample-pass", "Sample Pass");
+static RegisterPass<Profiling> X("profiling", "Profiling Pass");
