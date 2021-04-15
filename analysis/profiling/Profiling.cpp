@@ -12,6 +12,7 @@ using namespace llvm;
 namespace{
 	std::string pass_name = "";
 
+	//define llvm pass
 	struct Profiling : public PassInfoMixin<Profiling>{
 		void runOnBasicBlocks(Function &F){
 			for (auto &BB : F.getBasicBlockList()){
@@ -21,12 +22,10 @@ namespace{
 			}
 		}
 
-		//define llvm pass
+		//TODO: use module manager
 		PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM){
 			std::ofstream file;
 
-			//cont_bb = 0;
-			file.clear();
 			std::string filename("./results/");
 			filename.append(pass_name);
 			filename.append(".txt");
