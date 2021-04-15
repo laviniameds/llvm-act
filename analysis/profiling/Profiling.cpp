@@ -1,76 +1,52 @@
 #include "llvm/Pass.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Analysis/RegionPass.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Passes/PassBuilder.h"
+#include "llvm/Passes/PassPlugin.h"
 #include "fstream"
 
 using namespace llvm;
 
-namespace {
+namespace{
 	//define llvm pass
-	struct Profiling : public ModulePass {
-		//define pass ID
-		static char ID;
-		//define derivate from a FunctionPass class
-		Profiling() : ModulePass(ID) {}
+	struct Profiling : public PassInfoMixin<Profiling>{
+		// void runOnBasicBlocks(Function &F){
+		// 	for (auto &BB : F.getBasicBlockList()){
+		// 		for (auto &I : BB.getInstList()){
+		// 			//check if instruction is valid to approximate
+		// 		}
+		// 	}
+		// }
 
-		std::deque<Region *> RQ;
-
-		void Profiling::getAnalysisUsage(AnalysisUsage &Info) const {
-			Info.addRequired<RegionInfoPass>();
-			Info.setPreservesAll();
+		PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM)
+		{
+			if (F.hasName())
+				errs() << "Hello " << F.getName() << "\n";
+			//runOnBasicBlocks(F);
+			return PreservedAnalyses::all();
 		}
-
-		bool isValidInst(Instruction &instruction){
-			if(instruction.isDebugOrPseudoInst())
-				return false;
-			if (instruction.isBinaryOp())
-				return true;
-		}
-
-		// Recurse through all subregions and all regions  into RQ.
-		static void addRegionIntoQueue(Region &R, std::deque<Region *> &RQ) {
-			RQ.push_back(&R);
-			for (const auto &E : R)
-				addRegionIntoQueue(*E, RQ);
-		}
-
-		void runOnBasicBlocks(Region *R){
-			for (auto *basic_block : R->blocks()){
-				for(auto &instruction : basic_block->getInstList()){
-					//check if instruction is valid to approximate
-					if (isValidInst(instruction)){
-						//
-					}
-				}
-			}
-		}
-
-		void runOnRegions(std::deque<Region *> &RQ){
-			while (!RQ.empty()) {
-				auto current_region = RQ.back();
-				runOnBasicBlocks(current_region);
-				RQ.pop_back();
-			}			
-		}
-
-		virtual bool runOnModule(Module &llvm_module){
-			auto RI = &getAnalysis<RegionInfoPass>().getRegionInfo();
-
-			//TODO: Global variables
-
-			//collect regions
-   			addRegionIntoQueue(*RI->getTopLevelRegion(), RQ);
-			
-			//run on regions
-			runOnRegions(RQ);
-
-			return false;	    
-		}			
 	};
 
 } // namespace llvm
 
-char Profiling::ID = 0;
+llvm::PassPluginLibraryInfo getProfilingPluginInfo(){
+	return {LLVM_PLUGIN_API_VERSION, "Profiling", LLVM_VERSION_STRING,
+			[](PassBuilder &PB) {
+				PB.registerPipelineParsingCallback(
+					[](StringRef Name, FunctionPassManager &FPM,
+					   ArrayRef<PassBuilder::PipelineElement>) {
+						if (Name == "profiling"){
+							FPM.addPass(Profiling());
+							return true;
+						}
+						return false;
+					});
+			}};
+}
 
-static RegisterPass<Profiling> X("profiling", "Profiling Pass");
+extern "C" LLVM_ATTRIBUTE_WEAK ::llvm::PassPluginLibraryInfo
+llvmGetPassPluginInfo(){
+	return getProfilingPluginInfo();
+}
