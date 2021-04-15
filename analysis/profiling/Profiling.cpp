@@ -10,21 +10,32 @@
 using namespace llvm;
 
 namespace{
-	//define llvm pass
-	struct Profiling : public PassInfoMixin<Profiling>{
-		// void runOnBasicBlocks(Function &F){
-		// 	for (auto &BB : F.getBasicBlockList()){
-		// 		for (auto &I : BB.getInstList()){
-		// 			//check if instruction is valid to approximate
-		// 		}
-		// 	}
-		// }
+	std::string pass_name = "";
 
-		PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM)
-		{
-			if (F.hasName())
-				errs() << "Hello " << F.getName() << "\n";
-			//runOnBasicBlocks(F);
+	struct Profiling : public PassInfoMixin<Profiling>{
+		void runOnBasicBlocks(Function &F){
+			for (auto &BB : F.getBasicBlockList()){
+				for (auto &I : BB.getInstList()){
+					//check instruction type
+				}
+			}
+		}
+
+		//define llvm pass
+		PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM){
+			std::ofstream file;
+
+			//cont_bb = 0;
+			file.clear();
+			std::string filename("./results/");
+			filename.append(pass_name);
+			filename.append(".txt");
+			file.open(filename.c_str(), std::ios::out);
+
+			//run on each function basic block 
+			runOnBasicBlocks(F);
+
+			file.close();
 			return PreservedAnalyses::all();
 		}
 	};
