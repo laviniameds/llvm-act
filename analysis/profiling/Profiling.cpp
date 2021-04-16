@@ -46,7 +46,7 @@ namespace{
 			filename.append(modulename);
 			filename.append(".txt");
 			file.open(filename.c_str(), std::ios::out);
-			file << "Profiling " << modulename << " results: " << "\n\n";
+			file << "Profiling Results of '" << modulename << "'\n\n";
 
 			for(auto &F : M.getFunctionList())
 				runOnFunction(F);

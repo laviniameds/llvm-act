@@ -1,4 +1,4 @@
-Profiling sum_to_n.c results: 
+Profiling Results of 'sum_to_n.c'
 
 add : 5.88235%
 alloca : 14.7059%
