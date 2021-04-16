@@ -1,5 +1,6 @@
 #include "llvm/Pass.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Type.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/raw_ostream.h"
@@ -10,29 +11,47 @@
 using namespace llvm;
 
 namespace{
-	std::string pass_name = "";
-
 	//define llvm pass
 	struct Profiling : public PassInfoMixin<Profiling>{
-		void runOnBasicBlocks(Function &F){
+		std::string pass_name = "";
+		std::map<std::string, float> map_qtd_types;
+		std::map<std::string, float>::iterator it;
+		int total_qtd_instr = 0;
+		std::ofstream file;
+
+		void runOnFunction(Function &F){
+			//run on each function basic block
 			for (auto &BB : F.getBasicBlockList()){
 				for (auto &I : BB.getInstList()){
-					//check instruction type
+						it = map_qtd_types.find(I.getOpcodeName());						
+						if(it != map_qtd_types.end())
+							it->second++;
+						else
+							map_qtd_types.insert({I.getOpcodeName(), 1});
+
+						total_qtd_instr++;	
+					}
 				}
+		}
+
+		void printResults(){
+			for(it = map_qtd_types.begin(); it != map_qtd_types.end(); it++){
+				file << it->first << " : " << (it->second*100)/total_qtd_instr << "%\n";
 			}
 		}
 
-		//TODO: use module manager
-		PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM){
-			std::ofstream file;
-
-			std::string filename("./results/");
-			filename.append(pass_name);
+		PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM){
+			std::string modulename = M.getSourceFileName().substr(M.getSourceFileName().find_last_of("/")+1, M.getSourceFileName().find(".c"));
+			std::string filename("./analysis/profiling/results/");
+			filename.append(modulename);
 			filename.append(".txt");
 			file.open(filename.c_str(), std::ios::out);
+			file << "Profiling " << modulename << " results: " << "\n\n";
 
-			//run on each function basic block 
-			runOnBasicBlocks(F);
+			for(auto &F : M.getFunctionList())
+				runOnFunction(F);
+
+			printResults();
 
 			file.close();
 			return PreservedAnalyses::all();
@@ -41,22 +60,19 @@ namespace{
 
 } // namespace llvm
 
-llvm::PassPluginLibraryInfo getProfilingPluginInfo(){
-	return {LLVM_PLUGIN_API_VERSION, "Profiling", LLVM_VERSION_STRING,
-			[](PassBuilder &PB) {
-				PB.registerPipelineParsingCallback(
-					[](StringRef Name, FunctionPassManager &FPM,
-					   ArrayRef<PassBuilder::PipelineElement>) {
-						if (Name == "profiling"){
-							FPM.addPass(Profiling());
-							return true;
-						}
-						return false;
-					});
-			}};
-}
-
-extern "C" LLVM_ATTRIBUTE_WEAK ::llvm::PassPluginLibraryInfo
+extern "C" ::llvm::PassPluginLibraryInfo LLVM_ATTRIBUTE_WEAK
 llvmGetPassPluginInfo(){
-	return getProfilingPluginInfo();
+	return {
+		LLVM_PLUGIN_API_VERSION, "Profiling", "v0.1",
+		[](PassBuilder &PB) {
+			PB.registerPipelineParsingCallback(
+				[](StringRef Name, ModulePassManager &MAM,
+				   ArrayRef<PassBuilder::PipelineElement>) {
+					if (Name == "profiling"){
+						MAM.addPass(Profiling());
+						return true;
+					}
+					return false;
+				});
+		}};
 }
