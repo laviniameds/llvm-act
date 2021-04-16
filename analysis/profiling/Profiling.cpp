@@ -41,7 +41,7 @@ namespace{
 		}
 
 		PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM){
-			std::string modulename = M.getSourceFileName().substr(M.getSourceFileName().find_last_of("/")+1, M.getSourceFileName().find(".c"));
+			std::string modulename = M.getSourceFileName().substr(M.getSourceFileName().find_last_of("/")+1);
 			std::string filename("./analysis/profiling/results/");
 			filename.append(modulename);
 			filename.append(".txt");
