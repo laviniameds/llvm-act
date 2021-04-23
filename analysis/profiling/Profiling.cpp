@@ -1,13 +1,12 @@
 #include "llvm/Pass.h"
 #include "llvm/IR/Module.h"
-#include <llvm/IR/Instructions.h>
-#include <llvm/IR/IntrinsicInst.h>
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "fstream"
+#include "../../util/InstType.hpp"
 
 using namespace llvm;
 
@@ -21,34 +20,11 @@ namespace{
 		std::ofstream file;
 		std::string I_type;
 
-		std::string getITypeName(const unsigned llvm_opCpde){
-			if(llvm_opCpde >= llvm::Instruction::BinaryOps::BinaryOpsBegin && llvm_opCpde < llvm::Instruction::BinaryOpsEnd){
-				return "Binary";
-			}
-			else if (llvm_opCpde >= llvm::Instruction::TermOpsBegin && llvm_opCpde < llvm::Instruction::TermOpsEnd){
-				return "Terminator";
-			}
-			else if (llvm_opCpde >= llvm::Instruction::MemoryOpsBegin && llvm_opCpde < llvm::Instruction::MemoryOpsEnd){
-				return "Memory";
-			}
-			else if (llvm_opCpde >= llvm::Instruction::UnaryOpsBegin && llvm_opCpde < llvm::Instruction::UnaryOpsEnd){
-				return "Unary";
-			}
-			else if (llvm_opCpde >= llvm::Instruction::CastOpsBegin && llvm_opCpde < llvm::Instruction::CastOpsEnd){
-				return "Cast";
-			}
-			else if(llvm_opCpde >= llvm::Instruction::OtherOpsBegin && llvm_opCpde < llvm::Instruction::OtherOpsEnd){
-				return "Other";
-			}
-			else
-				return "Undefined";
-		}
-
 		void runOnFunction(Function &F){
 			//run on each function basic block
 			for (auto &BB : F.getBasicBlockList()){
 				for (auto &I : BB.getInstList()){
-						I_type = getITypeName(I.getOpcode());
+						I_type = InstType::getITypeName(I.getOpcode());
 						it = map_qtd_types.find(I_type);						
 						if(it != map_qtd_types.end())
 							it->second++;
