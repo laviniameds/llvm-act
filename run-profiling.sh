@@ -10,7 +10,8 @@ cd build/ && cmake .. && make && cd .. && echo ""\
 
 # define variables
 src=$1
-obj=${1%.c}.ll
+#TODO: .c/.cpp
+obj=${1%.cpp}.ll
 
 clang-12 -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${obj}
 
