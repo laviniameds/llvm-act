@@ -1,6 +1,6 @@
 #include "llvm/IR/Instructions.h"
 
-namespace llvm {
+namespace act {
 
 class InstType{
 public:

@@ -9,8 +9,10 @@
 #include "../../util/InstType.hpp"
 
 using namespace llvm;
+using namespace act;
 
-namespace{
+namespace {
+
 	//define llvm pass
 	struct Profiling : public PassInfoMixin<Profiling>{
 		std::string pass_name = "";

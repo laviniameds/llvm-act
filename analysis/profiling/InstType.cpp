@@ -1,8 +1,8 @@
 #include "../../util/InstType.hpp"
 
-namespace llvm {
+namespace act {
 
-std::string getITypeName(const unsigned llvm_opCpde){
+std::string InstType::getITypeName(const unsigned llvm_opCpde){
     if(llvm_opCpde >= llvm::Instruction::BinaryOps::BinaryOpsBegin && llvm_opCpde < llvm::Instruction::BinaryOpsEnd){
         return "Binary";
     }
