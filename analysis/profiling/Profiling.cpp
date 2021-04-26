@@ -7,6 +7,8 @@
 #include "llvm/Passes/PassPlugin.h"
 #include "fstream"
 #include "../../util/InstType.hpp"
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/LoopPass.h"
 
 using namespace llvm;
 using namespace act;
@@ -15,6 +17,7 @@ namespace {
 
 	//define llvm pass
 	struct Profiling : public PassInfoMixin<Profiling>{
+
 		std::string pass_name = "";
 		std::map<std::string, float> map_qtd_types;
 		std::map<std::string, float>::iterator it;
@@ -22,7 +25,24 @@ namespace {
 		std::ofstream file;
 		std::string I_type;
 
-		void runOnFunction(Function &F){
+		void printResults(){
+			for(it = map_qtd_types.begin(); it != map_qtd_types.end(); it++){
+				file << it->first << " : " << (it->second*100)/total_qtd_instr << "%\n";
+			}
+		}
+
+		void runOnLoops(Function &F, FunctionAnalysisManager &FAM){
+			LoopInfo LI;
+			LI.analyze(FAM.getResult<DominatorTreeAnalysis>(F));
+
+			//TODO: quantify loops
+		}
+
+		void runOnFunction(Function &F, FunctionAnalysisManager &FAM){
+
+			//run on function loops
+			runOnLoops(F, FAM);
+
 			//run on each function basic block
 			for (auto &BB : F.getBasicBlockList()){
 				for (auto &I : BB.getInstList()){
@@ -38,13 +58,7 @@ namespace {
 				}
 		}
 
-		void printResults(){
-			for(it = map_qtd_types.begin(); it != map_qtd_types.end(); it++){
-				file << it->first << " : " << (it->second*100)/total_qtd_instr << "%\n";
-			}
-		}
-
-		PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM){
+		PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM, FunctionAnalysisManager &FAM){
 			std::string modulename = M.getSourceFileName().substr(M.getSourceFileName().find_last_of("/")+1);
 			std::string filename("./analysis/profiling/results/");
 			filename.append(modulename);
@@ -53,8 +67,8 @@ namespace {
 			file << "Profiling Results of '" << modulename << "'\n\n";
 
 			for(auto &F : M.getFunctionList())
-				runOnFunction(F);
-
+				runOnFunction(F, FAM);
+			
 			printResults();
 
 			file.close();
