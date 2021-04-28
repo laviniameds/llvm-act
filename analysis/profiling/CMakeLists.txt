@@ -1,7 +1,7 @@
 add_library(Profiling MODULE
     # List your source files here.
     Profiling.cpp
-    InstType.cpp
+    opUtil.cpp
 )
 
 # Use C++11 to compile our pass (i.e., supply -std=c++11).
