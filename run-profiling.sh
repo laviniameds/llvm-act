@@ -8,11 +8,19 @@ fi
 # build project
 cd build/ && cmake .. && make && cd .. && echo ""\
 
-# define variables
-src=$1
-#TODO: .c/.cpp
-obj=${1%.cpp}.ll
+#get directory
+dir=$1
+#name_dir=$(basename ${dir})
+#mkdir -p analysis/profiling/results/"$name_dir"
 
-clang-12 -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${obj}
+#get all files in dir 
+files=$(find $dir -type f \( -iname \*.c -o -iname \*.cpp \))
+#run through files in dir
+for src in $files; do
+    echo $src
+    filename=${src%.cpp}.ll
+    clang-12 -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${filename}
+    opt-12 -S -disable-output -load-pass-plugin=build/analysis/profiling/libProfiling.so -passes="profiling" < ${filename} > /dev/null 
+done
 
-opt-12 -disable-output -load-pass-plugin=build/analysis/profiling/libProfiling.so -passes="profiling" ${obj} 
+#echo "Check for results in 'analysis/profiling/results' dir!"

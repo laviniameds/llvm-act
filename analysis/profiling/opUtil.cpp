@@ -28,20 +28,10 @@ std::string opUtil::getInstructionName(const unsigned llvm_opCpde){
 std::string opUtil::getBinaryName(const unsigned llvm_opCpde){
 	switch (llvm_opCpde) {
 		case llvm::Instruction::BinaryOps::FAdd:
-		  return "Float Point";
-		  break;
 		case llvm::Instruction::BinaryOps::FDiv:
-		  return "Float Point";
-		  break;
 		case llvm::Instruction::BinaryOps::FMul:
-		  return "Float Point";
-		  break;
 		case llvm::Instruction::BinaryOps::FRem:
-		  return "Float Point";
-		  break;
 		case llvm::Instruction::BinaryOps::FSub:
-		  return "Float Point";
-		  break;
 		case llvm::Instruction::BinaryOps::UDiv:
 		  return "Float Point";
 		  break;

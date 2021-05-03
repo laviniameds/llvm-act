@@ -3,36 +3,36 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
-#include "fstream"
-#include "../../util/opUtil.hpp"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
+#include "fstream"
+//#include "llvm/Support/CommandLine.h"
+#include "../../util/opUtil.hpp"
 
 using namespace llvm;
 using namespace act;
+
+//static cl::opt<std::string> InputDirName("name_dir", cl::desc("the input name directory"), cl::value_desc("name_dir"));
 
 namespace {
 
 //define llvm pass
 struct Profiling : public PassInfoMixin<Profiling>{
 
-	std::string pass_name = "";
 	std::map<std::string, float> map_qtd_types;
 	std::map<std::string, float>::iterator it;
 	int total_qtd_instr = 0;
-	int total_loops = 0;
+	int max = 0;
+	int percentage = 0;
+	//int total_loops = 0;
 	std::ofstream file;
 	std::string I_Name;
-	//StringRef *LoopBody = new StringRef("for.body");
+	std::string pass_name;
+	//std::string name_dir = InputDirName.getValue();
 
-	void printResults(){
-		for(it = map_qtd_types.begin(); it != map_qtd_types.end(); it++){
-			file << it->first << " : " << (it->second*100)/total_qtd_instr << "%\n";
-		}
-	}
+	//StringRef *LoopBody = new StringRef("for.body");
 	
 	//TODO: quatify loops
 	// void processLoop(Loop *loop){			
@@ -51,13 +51,22 @@ struct Profiling : public PassInfoMixin<Profiling>{
 	// 		processLoop(loop);
 	// }
 
+	void printResults(){
+		for(it = map_qtd_types.begin(); it != map_qtd_types.end(); it++){
+			percentage = (it->second*100)/total_qtd_instr;
+			if(percentage > max){
+				max = percentage;
+				pass_name = it->first;
+			}
+			file << it->first << " : " << percentage << "%\n";
+		}
+	}
+
 	void runOnFunction(Function &F, FunctionAnalysisManager &FAM){
 		//run on each function basic block
 		for (auto &BB : F.getBasicBlockList()){
 			for (auto &I : BB.getInstList()){
-				I_Name = opUtil::getInstructionName(I.getOpcode());
-				
-
+				I_Name = opUtil::getInstructionName(I.getOpcode());				
 				it = map_qtd_types.find(I_Name);						
 				if(it != map_qtd_types.end())
 					it->second++;
@@ -75,6 +84,8 @@ struct Profiling : public PassInfoMixin<Profiling>{
 	PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM){
 		std::string modulename = M.getSourceFileName().substr(M.getSourceFileName().find_last_of("/")+1);
 		std::string filename("./analysis/profiling/results/");
+		//filename.append(name_dir);
+		//filename.append("/");
 		filename.append(modulename);
 		filename.append(".txt");
 		file.open(filename.c_str(), std::ios::out);
@@ -88,6 +99,7 @@ struct Profiling : public PassInfoMixin<Profiling>{
 
 		printResults();
 		file << "-------- Function end---------" << "\n\n";
+		file << "Pass Name: " << pass_name << "\n";
 
 		file.close();
 		return PreservedAnalyses::all();
