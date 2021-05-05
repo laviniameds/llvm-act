@@ -1,8 +1,10 @@
 *
 !/**/
 !*.*
-
 build
 tests/*/*.ll
+tests/*/*.opt.ll
 tests/*/*/*.opt.ll
+tests/*/*/*.ll
+analysis/profiling/results/*
 .vscode/
