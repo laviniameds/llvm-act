@@ -11,3 +11,4 @@ link_directories(${LLVM_LIBRARY_DIRS})
 
 #add_subdirectory(transformations)  # Use your pass name here.
 add_subdirectory(analysis/profiling)
+add_subdirectory(transformations/precision-scaling)

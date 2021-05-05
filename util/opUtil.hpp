@@ -4,7 +4,8 @@ namespace act {
 
 class opUtil{
 private:
-    static std::string getBinaryName(const unsigned llvm_opCpde);  
+    static std::string getBinaryName(const unsigned llvm_opCpde); 
+    static std::string getOtherName(const unsigned llvm_opCpde);   
 public:
     static std::string getInstructionName(const unsigned llvm_opCpde);
 };

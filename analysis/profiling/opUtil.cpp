@@ -4,7 +4,7 @@ namespace act {
 
 std::string opUtil::getInstructionName(const unsigned llvm_opCpde){
     if(llvm_opCpde >= llvm::Instruction::BinaryOps::BinaryOpsBegin && llvm_opCpde < llvm::Instruction::BinaryOpsEnd){
-        return opUtil::getBinaryName(llvm_opCpde);
+        return "Binary";
     }
     else if (llvm_opCpde >= llvm::Instruction::TermOpsBegin && llvm_opCpde < llvm::Instruction::TermOpsEnd){
         return "Control Flow";
@@ -13,13 +13,13 @@ std::string opUtil::getInstructionName(const unsigned llvm_opCpde){
         return "Memory";
     }
     else if (llvm_opCpde >= llvm::Instruction::UnaryOpsBegin && llvm_opCpde < llvm::Instruction::UnaryOpsEnd){
-        return "Float Point";
+        return "Binary";
     }
     else if (llvm_opCpde >= llvm::Instruction::CastOpsBegin && llvm_opCpde < llvm::Instruction::CastOpsEnd){
         return "Cast";
     }
     else if(llvm_opCpde >= llvm::Instruction::OtherOpsBegin && llvm_opCpde < llvm::Instruction::OtherOpsEnd){
-        return "Other";
+        return getOtherName(llvm_opCpde);
     }
     else
         return "Undefined";
@@ -40,6 +40,25 @@ std::string opUtil::getBinaryName(const unsigned llvm_opCpde){
 	}
 }
 
-
+std::string opUtil::getOtherName(const unsigned llvm_opCpde){
+	switch (llvm_opCpde) {
+		case llvm::Instruction::OtherOps::ICmp:
+        case llvm::Instruction::OtherOps::FCmp:
+		  return "Binary";
+		  break;
+        // case llvm::Instruction::OtherOps::PHI:
+        // case llvm::Instruction::OtherOps::Select:
+        // case llvm::Instruction::OtherOps::Call:
+		//   return "Control Flow";
+		//   break;
+        // case llvm::Instruction::OtherOps::ExtractElement:
+        // case llvm::Instruction::OtherOps::InsertElement:
+        // case llvm::Instruction::OtherOps::ShuffleVector:
+        //     return "Vector";
+        //     break;
+		default:
+		  return "Other";
+	}
+}
 
 }

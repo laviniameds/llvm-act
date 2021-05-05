@@ -10,6 +10,7 @@ cd build/ && cmake .. && make && cd .. && echo ""\
 
 #get directory
 dir=$1
+
 #name_dir=$(basename ${dir})
 #mkdir -p analysis/profiling/results/"$name_dir"
 
@@ -19,8 +20,10 @@ files=$(find $dir -type f \( -iname \*.c -o -iname \*.cpp \))
 for src in $files; do
     echo $src
     filename=${src%.cpp}.ll
-    clang-12 -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${filename}
-    opt-12 -S -disable-output -load-pass-plugin=build/analysis/profiling/libProfiling.so -passes="profiling" < ${filename} > /dev/null 
+    opt=${src%.cpp}.opt.ll
+    clang-12 -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${opt}
+    opt-12 -S -mem2reg ${filename} > ${opt}
+    opt-12 -S -disable-output -load-pass-plugin=build/analysis/profiling/libProfiling.so -passes="profiling" < ${opt} > /dev/null 
 done
 
 #echo "Check for results in 'analysis/profiling/results' dir!"

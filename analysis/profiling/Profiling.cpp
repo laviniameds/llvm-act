@@ -67,13 +67,15 @@ struct Profiling : public PassInfoMixin<Profiling>{
 		for (auto &BB : F.getBasicBlockList()){
 			for (auto &I : BB.getInstList()){
 				I_Name = opUtil::getInstructionName(I.getOpcode());				
-				it = map_qtd_types.find(I_Name);						
-				if(it != map_qtd_types.end())
-					it->second++;
-				else
-					map_qtd_types.insert({I_Name, 1});
+				if(I_Name != "Other"){
+					it = map_qtd_types.find(I_Name);						
+					if(it != map_qtd_types.end())
+						it->second++;
+					else
+						map_qtd_types.insert({I_Name, 1});
 
-				total_qtd_instr++;	
+					total_qtd_instr++;
+				}	
 			}
 		}
 
