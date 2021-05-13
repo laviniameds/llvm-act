@@ -10,6 +10,7 @@
 #include "fstream"
 //#include "llvm/Support/CommandLine.h"
 #include "../../util/opUtil.hpp"
+#include "../../util/passUtil.hpp"
 
 using namespace llvm;
 using namespace act;
@@ -56,7 +57,7 @@ struct Profiling : public PassInfoMixin<Profiling>{
 			percentage = (it->second*100)/total_qtd_instr;
 			if(percentage > max){
 				max = percentage;
-				pass_name = it->first;
+				pass_name = passUtil::getPassName(it->first);
 			}
 			file << it->first << " : " << percentage << "%\n";
 		}
