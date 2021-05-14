@@ -46,11 +46,11 @@ std::string opUtil::getOtherName(const unsigned llvm_opCpde){
         case llvm::Instruction::OtherOps::FCmp:
 		  return "Binary";
 		  break;
-        // case llvm::Instruction::OtherOps::PHI:
         // case llvm::Instruction::OtherOps::Select:
         // case llvm::Instruction::OtherOps::Call:
-		//   return "Control Flow";
-		//   break;
+        case llvm::Instruction::OtherOps::PHI:
+          return "Control Flow";
+          break;
         // case llvm::Instruction::OtherOps::ExtractElement:
         // case llvm::Instruction::OtherOps::InsertElement:
         // case llvm::Instruction::OtherOps::ShuffleVector:

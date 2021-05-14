@@ -29,6 +29,7 @@ struct Profiling : public PassInfoMixin<Profiling>{
 	int percentage = 0;
 	//int total_loops = 0;
 	std::ofstream file;
+	std::ofstream file_pass;
 	std::string I_Name;
 	std::string pass_name;
 	//std::string name_dir = InputDirName.getValue();
@@ -86,25 +87,29 @@ struct Profiling : public PassInfoMixin<Profiling>{
 
 	PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM){
 		std::string modulename = M.getSourceFileName().substr(M.getSourceFileName().find_last_of("/")+1);
-		std::string filename("./analysis/profiling/results/");
-		//filename.append(name_dir);
-		//filename.append("/");
-		filename.append(modulename);
-		filename.append(".txt");
-		file.open(filename.c_str(), std::ios::out);
+		// std::string path = M.getSourceFileName().substr(0, M.getSourceFileName().find_last_of("/"));
+		std::string path = M.getSourceFileName();
+
+		path.append("_profiling.txt");
+		file.open(path.c_str(), std::ios::out);
 		file << "Profiling Results of '" << modulename << "'\n\n";
-
 		file << "-------- Function begin---------" << "\n";
+		
 		FunctionAnalysisManager &FAM = MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
-
 		for(auto &F : M.getFunctionList())
 			runOnFunction(F, FAM);				
-
 		printResults();
+
 		file << "-------- Function end---------" << "\n\n";
 		file << "Pass Name: " << pass_name << "\n";
-
 		file.close();
+
+		path = M.getSourceFileName();
+		path.append("_pass.txt");
+		file_pass.open(path.c_str(), std::ios::out);
+		file_pass << "Pass Name: " << pass_name << "\n";
+		file_pass.close();
+
 		return PreservedAnalyses::all();
 	}
 };
