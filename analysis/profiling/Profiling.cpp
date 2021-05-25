@@ -11,6 +11,8 @@
 //#include "llvm/Support/CommandLine.h"
 #include "../../util/opUtil.hpp"
 #include "../../util/passUtil.hpp"
+#include "llvm/IR/DebugInfoMetadata.h"
+#include "llvm/IR/IntrinsicInst.h"
 
 using namespace llvm;
 using namespace act;
@@ -26,7 +28,7 @@ struct Profiling : public PassInfoMixin<Profiling>{
 	std::map<std::string, float>::iterator it;
 	int total_qtd_instr = 0;
 	int max = 0;
-	int percentage = 0;
+	float percentage = 0;
 	//int total_loops = 0;
 	std::ofstream file;
 	std::ofstream file_pass;
@@ -68,16 +70,19 @@ struct Profiling : public PassInfoMixin<Profiling>{
 		//run on each function basic block
 		for (auto &BB : F.getBasicBlockList()){
 			for (auto &I : BB.getInstList()){
-				I_Name = opUtil::getInstructionName(I.getOpcode());				
-				if(I_Name != "Other"){
-					it = map_qtd_types.find(I_Name);						
-					if(it != map_qtd_types.end())
-						it->second++;
-					else
-						map_qtd_types.insert({I_Name, 1});
+				auto debug_value_instruction = llvm::dyn_cast<llvm::DbgValueInst>(&I);
+				if(!debug_value_instruction){
+					I_Name = opUtil::getInstructionName(I.getOpcode());				
+					if(I_Name != "Other"){
+						it = map_qtd_types.find(I_Name);						
+						if(it != map_qtd_types.end())
+							it->second++;
+						else
+							map_qtd_types.insert({I_Name, 1});
 
-					total_qtd_instr++;
-				}	
+						total_qtd_instr++;
+					}	
+				}
 			}
 		}
 

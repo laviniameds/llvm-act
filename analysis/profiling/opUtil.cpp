@@ -16,7 +16,7 @@ std::string opUtil::getInstructionName(const unsigned llvm_opCpde){
         return "Binary";
     }
     else if (llvm_opCpde >= llvm::Instruction::CastOpsBegin && llvm_opCpde < llvm::Instruction::CastOpsEnd){
-        return "Cast";
+        return "Other";
     }
     else if(llvm_opCpde >= llvm::Instruction::OtherOpsBegin && llvm_opCpde < llvm::Instruction::OtherOpsEnd){
         return getOtherName(llvm_opCpde);
@@ -33,10 +33,10 @@ std::string opUtil::getBinaryName(const unsigned llvm_opCpde){
 		case llvm::Instruction::BinaryOps::FRem:
 		case llvm::Instruction::BinaryOps::FSub:
 		case llvm::Instruction::BinaryOps::UDiv:
-		  return "Float Point";
-		  break;
+            return "Float Point";
+		    break;
 		default:
-		  return "Integer";
+            return "Integer";
 	}
 }
 
@@ -44,18 +44,22 @@ std::string opUtil::getOtherName(const unsigned llvm_opCpde){
 	switch (llvm_opCpde) {
 		case llvm::Instruction::OtherOps::ICmp:
         case llvm::Instruction::OtherOps::FCmp:
-		  return "Binary";
-		  break;
-        // case llvm::Instruction::OtherOps::Select:
-        // case llvm::Instruction::OtherOps::Call:
+            return "Binary";
+            break;
+        case llvm::Instruction::OtherOps::InsertValue:
+        case llvm::Instruction::OtherOps::ExtractValue:
+            return "Memory";
+            break;
+        case llvm::Instruction::OtherOps::Select:
+        case llvm::Instruction::OtherOps::Call:
         case llvm::Instruction::OtherOps::PHI:
-          return "Control Flow";
-          break;
+            return "Control Flow";
+            break;
         // case llvm::Instruction::OtherOps::ExtractElement:
         // case llvm::Instruction::OtherOps::InsertElement:
         // case llvm::Instruction::OtherOps::ShuffleVector:
         //     return "Vector";
-        //     break;
+            break;
 		default:
 		  return "Other";
 	}
