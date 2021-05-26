@@ -5,12 +5,13 @@ if [ -d build ]; then :
 else mkdir build 
 fi 
 
+{
 # build project
 cd build/ && cmake .. && make && cd .. && echo ""\
 
 #get directories
 dir=$1
-current_dir="$( cd "$( dirname "$0" )" && pwd )"
+current_dir="$( cd "$( dirname "$0" )" && cd .. && cd .. && pwd )"
 
 #get perforation rates
 rates_path="${current_dir}/settings/perforation_rates.txt"
@@ -33,4 +34,6 @@ for src in $files; do
         opt-12 -S -mem2reg ${filename} > ${opt}
         opt-12 -S -load build/transformations/memory-skipping/libMemorySkippingPass.so -memory-skipping -loop_rate=$i < ${opt} > ${opt_perf}      
     done
-done
+    echo "Memory Skipping done! You can find results in ${dir_path}"
+done 
+} 2> memory-skipping.err
