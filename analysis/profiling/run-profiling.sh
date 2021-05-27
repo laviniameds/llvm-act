@@ -18,8 +18,12 @@ dir=$1
 files=$(find $dir -type f \( -iname \*.c -o -iname \*.cpp \))
 #run through files in dir
 for src in $files; do
-    filename=${src%.cpp}.ll
-    opt=${src%.cpp}.opt.ll
+    src_dir=$(dirname $src)
+    src_base=$(basename $src)
+    dir_path="${src_dir}/profiling_results"
+    mkdir -p $dir_path
+    filename=${dir_path}/${src_base%.*}.ll
+    opt=${dir_path}/${src_base%.*}.opt.ll
     clang-12 -x c++ -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${filename} 
     opt-12 -S -mem2reg ${filename} > ${opt} 
     opt-12 -S -disable-output -load-pass-plugin=build/analysis/profiling/libProfiling.so -passes="profiling" < ${opt} > /dev/null

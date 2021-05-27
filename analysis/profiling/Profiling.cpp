@@ -91,10 +91,10 @@ struct Profiling : public PassInfoMixin<Profiling>{
 	}
 
 	PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM){
-		std::string modulename = M.getSourceFileName().substr(M.getSourceFileName().find_last_of("/")+1);
-		// std::string path = M.getSourceFileName().substr(0, M.getSourceFileName().find_last_of("/"));
-		std::string path = M.getSourceFileName();
-
+		std::string modulename = M.getSourceFileName().substr(M.getSourceFileName().find_last_of("/")+1);	
+		std::string path = M.getSourceFileName().substr(0, M.getSourceFileName().find_last_of("/"));
+		path.append("/profiling_results/");
+		path.append(modulename);
 		path.append("_profiling.txt");
 		file.open(path.c_str(), std::ios::out);
 		file << "Profiling Results of '" << modulename << "'\n\n";
@@ -109,7 +109,9 @@ struct Profiling : public PassInfoMixin<Profiling>{
 		file << "Pass Name: " << pass_name << "\n";
 		file.close();
 
-		path = M.getSourceFileName();
+		path = M.getSourceFileName().substr(0, M.getSourceFileName().find_last_of("/"));
+		path.append("/profiling_results/");
+		path.append(modulename);		
 		path.append("_pass.txt");
 		file_pass.open(path.c_str(), std::ios::out);
 		file_pass << "Pass Name: " << pass_name << "\n";

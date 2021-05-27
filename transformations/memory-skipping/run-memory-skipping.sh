@@ -25,8 +25,8 @@ for src in $files; do
     src_base=$(basename $src)
     dir_path="${src_dir}/memory_skipping_results"
     mkdir -p $dir_path
-    filename=${dir_path}/${src_base}.ll
-    opt=${dir_path}/${src_base}.opt.ll
+    filename=${dir_path}/${src_base%.*}.ll
+    opt=${dir_path}/${src_base%.*}.opt.ll
     for i in $rates; do
         #filename_perf=${dir_path}/${src_base}_${i}.ll
         opt_perf=${dir_path}/${src_base}_${i}.opt.ll
