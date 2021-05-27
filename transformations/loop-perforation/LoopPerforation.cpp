@@ -141,17 +141,19 @@ namespace {
 		}
 		
 		virtual bool runOnFunction(Function &llvm_function){
-			//errs() << "I saw a function called " << llvm_function.getName() << "!\n";
-			
-			f_loop_map.clear();
+			if(!llvm_function.getName().equals_lower("main")){
+				//errs() << "I saw a function called " << llvm_function.getName() << "!\n";
+				
+				f_loop_map.clear();
 
-			LoopInfo &loop_info = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-			//handle the loops into every function
-			for(auto &loop : loop_info){
-				processLoop(llvm_function, loop);
+				LoopInfo &loop_info = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+				//handle the loops into every function
+				for(auto &loop : loop_info){
+					processLoop(llvm_function, loop);
+				}
+
+				perforateLoops();
 			}
-
-			perforateLoops();
 
 			return false;	    
 		}	    			
