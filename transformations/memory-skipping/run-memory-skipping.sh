@@ -23,17 +23,21 @@ files=$(find $dir -type f \( -iname \*.c -o -iname \*.cpp \))
 for src in $files; do
     src_dir=$(dirname $src)
     src_base=$(basename $src)
-    dir_path="${src_dir}/memory_skipping_results"
+
+    dir_path="${src_dir}/memory_skipping_results/"
     mkdir -p $dir_path
     filename=${dir_path}/${src_base%.*}.ll
     opt=${dir_path}/${src_base%.*}.opt.ll
+    #filename_perf=${dir_path}/${src_base}_${i}.ll
+    clang-12 -x c++ -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-output -disable-O0-optnone -o ${filename}
+    opt-12 -S -mem2reg ${filename} > ${opt}
+
     for i in $rates; do
-        #filename_perf=${dir_path}/${src_base}_${i}.ll
-        opt_perf=${dir_path}/${src_base}_${i}.opt.ll
-        clang-12 -x c++ -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${filename}
-        opt-12 -S -mem2reg ${filename} > ${opt}
-        opt-12 -S -load build/transformations/memory-skipping/libMemorySkippingPass.so -memory-skipping -loop_rate=$i < ${opt} > ${opt_perf}      
+        dir_path="${src_dir}/memory_skipping_results/$i"
+        mkdir -p $dir_path
+        opt_perf=${dir_path}/${src_base%.*}_${i}.opt.ll
+        opt-12 -S -load build/transformations/memory-skipping/libMemorySkippingPass.so -memory-skipping -loop_rate=$i < ${opt} > ${opt_perf}
+        echo "Memory Skipping done! You can find results in ${dir_path}"      
     done
-    echo "Memory Skipping done! You can find results in ${dir_path}"
 done 
 } 2> memory-skipping.err

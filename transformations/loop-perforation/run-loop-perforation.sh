@@ -27,13 +27,19 @@ for src in $files; do
     mkdir -p $dir_path
     filename=${dir_path}/${src_base%.*}.ll
     opt=${dir_path}/${src_base%.*}.opt.ll
-    for i in $rates; do
-        #filename_perf=${dir_path}/${src_base}_${i}.ll
-        opt_perf=${dir_path}/${src_base}_${i}.opt.ll
-        clang-12 -x c++ -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${filename}
-        opt-12 -S -mem2reg ${filename} > ${opt}
-        opt-12 -S -load build/transformations/loop-perforation/libLoopPerforationPass.so -loop-perforation -loop_rate=$i < ${opt} > ${opt_perf}      
-    done
-    echo "Loop Perforation done! You can find results in ${dir_path}"
+    clang-12 -x c++ -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-output -disable-O0-optnone -o ${filename}
+    opt-12 -S -mem2reg ${filename} > ${opt}
+
+    # if [ "${base_src_dir}" == "${base_filename%.*}" ]
+    # then
+        #echo ${base_src_dir} ${base_filename%.*}
+        for i in $rates; do
+            dir_path="${src_dir}/loop_perforation_results/$i"
+            mkdir -p $dir_path
+            opt_perf=${dir_path}/${src_base%.*}_${i}.opt.ll           
+            opt-12 -S -load build/transformations/loop-perforation/libLoopPerforationPass.so -loop-perforation -loop_rate=$i < ${opt} > ${opt_perf}      
+            echo "Loop Perforation done! You can find results in ${dir_path}"        
+        done
+    # fi
 done 
 } 2> loop-perforation.err
