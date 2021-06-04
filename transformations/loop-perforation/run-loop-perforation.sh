@@ -27,7 +27,7 @@ for src in $files; do
     mkdir -p $dir_path
     filename=${dir_path}/${src_base%.*}.ll
     opt=${dir_path}/${src_base%.*}.opt.ll
-    clang-12 -x c++ -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-output -disable-O0-optnone -o ${filename}
+    clang-12 -x c++ -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${filename}
     opt-12 -S -mem2reg ${filename} > ${opt}
 
     # if [ "${base_src_dir}" == "${base_filename%.*}" ]

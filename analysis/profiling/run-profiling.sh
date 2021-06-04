@@ -20,7 +20,7 @@ files=$(find $dir -type f \( -iname \*.c -o -iname \*.cpp \))
 for src in $files; do
     src_dir=$(dirname $src)
     src_base=$(basename $src)
-    dir_path="${src_dir}/profiling_results"
+    dir_path="${src_dir}/profiling"
     mkdir -p $dir_path
     filename=${dir_path}/${src_base%.*}.ll
     opt=${dir_path}/${src_base%.*}.opt.ll
