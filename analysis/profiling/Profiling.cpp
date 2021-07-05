@@ -57,13 +57,17 @@ struct Profiling : public PassInfoMixin<Profiling>{
 
 	void printResults(){
 		for(it = map_qtd_types.begin(); it != map_qtd_types.end(); it++){
-			percentage = (it->second*100)/total_qtd_instr;
-			if(percentage > max){
-				max = percentage;
-				pass_name = passUtil::getPassName(it->first);
-			}
-			file << it->first << " : " << percentage << "%\n";
+			// percentage = (it->second*100)/total_qtd_instr;
+			// if(percentage > max){
+			// 	max = percentage;
+			// 	pass_name = passUtil::getPassName(it->first);
+			// }
+			file << it->first << ",";
 		}
+		file << "\n";
+		for(it = map_qtd_types.begin(); it != map_qtd_types.end(); it++)
+			file << it->second << ",";	
+		file << "\n";
 	}
 
 	void runOnFunction(Function &F, FunctionAnalysisManager &FAM){
@@ -95,27 +99,27 @@ struct Profiling : public PassInfoMixin<Profiling>{
 		std::string path = M.getSourceFileName().substr(0, M.getSourceFileName().find_last_of("/"));
 		path.append("/profiling_results/");
 		path.append(modulename);
-		path.append("_profiling.txt");
+		path.append("_profiling.csv");
 		file.open(path.c_str(), std::ios::out);
-		file << "Profiling Results of '" << modulename << "'\n\n";
-		file << "-------- Function begin---------" << "\n";
+		// file << "Profiling Results of '" << modulename << "'\n\n";
+		// file << "#-------- Function begin---------" << "\n";
 		
 		FunctionAnalysisManager &FAM = MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
 		for(auto &F : M.getFunctionList())
 			runOnFunction(F, FAM);				
 		printResults();
 
-		file << "-------- Function end---------" << "\n\n";
-		file << "Pass Name: " << pass_name << "\n";
+		// file << "#-------- Function end---------" << "\n\n";
+		// file << "Pass Name: " << pass_name << "\n";
 		file.close();
 
-		path = M.getSourceFileName().substr(0, M.getSourceFileName().find_last_of("/"));
-		path.append("/profiling_results/");
-		path.append(modulename);		
-		path.append("_pass.txt");
-		file_pass.open(path.c_str(), std::ios::out);
-		file_pass << "Pass Name: " << pass_name << "\n";
-		file_pass.close();
+		// path = M.getSourceFileName().substr(0, M.getSourceFileName().find_last_of("/"));
+		// path.append("/profiling_results/");
+		// path.append(modulename);		
+		// path.append("_pass.txt");
+		// file_pass.open(path.c_str(), std::ios::out);
+		// file_pass << "Pass Name: " << pass_name << "\n";
+		// file_pass.close();
 
 		return PreservedAnalyses::all();
 	}
