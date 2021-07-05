@@ -39,9 +39,16 @@ for d in $directories; do
 
     mkdir -p ${d}/merged
     echo "Binary,Control Flow,Memory," > ${d}/merged/merged.csv
+    echo "Binary,Control Flow,Memory," > ${d}/merged/percentage.csv
+
     for fname in ${d}/*.csv; do
         tail -n +2 -q $fname >> ${d}/merged/merged.csv
     done
+
+    awk ' BEGIN {FS=OFS=","}
+    {for (i=1; i<NF; i++) {sum[i]+=$i} len=NF}
+    END {for (i=1; i<=len; i++) $i=sum[i]; print}
+    ' ${d}/merged/merged.csv >> ${d}/merged/percentage.csv
 done
 
 } 2> profiling.err
