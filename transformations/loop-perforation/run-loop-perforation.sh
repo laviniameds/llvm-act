@@ -17,6 +17,10 @@ current_dir="$( cd "$( dirname "$0" )" && cd .. && cd .. && pwd )"
 rates_path="${current_dir}/settings/perforation_rates.txt"
 rates=$(<${rates_path})
 
+#get perforation method
+method_path="${current_dir}/settings/loop_method.txt"
+loop_method=$(<${method_path})
+
 #get all files in dir 
 files=$(find $dir -type f \( -iname \*.c -o -iname \*.cpp \))
 #run through files in dir
@@ -37,7 +41,8 @@ for src in $files; do
             dir_path="${src_dir}/loop_perforation_results/$i"
             mkdir -p $dir_path
             opt_perf=${dir_path}/${src_base%.*}_${i}.opt.ll           
-            opt-12 -S -load build/transformations/loop-perforation/libLoopPerforationPass.so -loop-perforation -loop_rate=$i < ${opt} > ${opt_perf}      
+            opt-12 -S -load build/transformations/loop-perforation/libLoopPerforationPass.so -loop-perforation -loop_rate=$i -loop_method=$loop_method < ${opt} > ${opt_perf}      
+            #opt-12 -analyze -dot-cfg ${opt}
             echo "Loop Perforation done! You can find results in ${dir_path}"        
         done
     # fi

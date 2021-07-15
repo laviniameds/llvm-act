@@ -16,9 +16,9 @@ static cl::opt<float> InputLoopRate("loop_rate",
 	cl::value_desc("loop_rate"));
 	
 //get input loop method from command line
-// static cl::opt<string> InputLoopRate("loop_method",
-// 	cl::desc("Specify input loop_method for Loop Perforation Pass"),
-// 	cl::value_desc("loop_method"));
+static cl::opt<int> InputLoopMethod("loop_method",
+	cl::desc("Specify input loop_method for Loop Perforation Pass"),
+	cl::value_desc("loop_method"));
 
 namespace
 {
@@ -145,6 +145,7 @@ namespace
 											
 											for(auto &op : cmp->operands()){
 												if(op == indVar) continue;
+												//errs() << "Truncation -- Changing [" << *op << "] to [" << *NewInc << "]!\n";
 												op = NewInc;
 											}
 										}
@@ -153,15 +154,15 @@ namespace
 										errs() << "no loop bound found!\n";
 								}
 							}
-							// else 
-							// 	errs() << "branch with no conditional!\n";
+							else 
+								errs() << "branch with no conditional!\n";
 						}
-						// else 
-						// 	errs() << "no exiting branch!\n";
+						else 
+							errs() << "no exiting branch!\n";
 					}
 				}
-				// else 
-				// 	errs() << "no latchblock!\n";
+				else 
+					errs() << "no latchblock!\n";
 			}
 		}
 
@@ -202,7 +203,7 @@ namespace
 					Type *ConstType = op->getType();
 					Constant *NewInc = ConstantInt::get(ConstType, loop_rate /*value*/, true /*issigned*/);
 
-					//errs() << "Changing [" << *op << "] to [" << *NewInc << "]!\n";
+					//errs() << "Modulo -- Changing [" << *op << "] to [" << *NewInc << "]!\n";
 
 					op = NewInc;
 				}	
@@ -210,15 +211,24 @@ namespace
 			}
 		}
 
-		// //random perforation
-		// void perforateRandom(){
-
+		// TODO: perforate random
+		// void perforateRandom(){ 	
 		// }
 
 		//perforate loop
 		void perforateLoops(){
-			//perforateTruncation();
-			perforateModulo();
+			errs() << InputLoopMethod.getValue() << "\n";
+			switch (InputLoopMethod.getValue()){
+			case 1:
+				perforateTruncation();
+				break;
+			case 2:
+				perforateModulo();
+				break;
+			default:
+				perforateModulo();
+				break;
+			}
 		}
 
 		virtual bool runOnFunction(Function &llvm_function)
