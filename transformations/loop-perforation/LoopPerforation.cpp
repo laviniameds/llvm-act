@@ -47,7 +47,7 @@ namespace
 		{
 			//check if the actual loop is a good candidate to perforate
 			if (isPerforable(llvm_function, loop)){
-				//errs() << "That's a perforable loop!" << "!\n";
+				errs() << "That's a perforable loop: " << *loop << "!\n\n";
 				f_loop_map.insert({loop, &llvm_function});
 			}
 
@@ -109,8 +109,7 @@ namespace
 
 		//truncation perforation
 		void perforateTruncation(){
-			for (it_f_loop_map = f_loop_map.begin(); it_f_loop_map != f_loop_map.end(); ++it_f_loop_map)
-			{
+			for (it_f_loop_map = f_loop_map.begin(); it_f_loop_map != f_loop_map.end(); ++it_f_loop_map){
 				auto loop = it_f_loop_map->first;
 				auto llvm_function = it_f_loop_map->second;
 
@@ -118,51 +117,51 @@ namespace
 				BinaryOperator *indVarUpdate = NULL;
 				ICmpInst *cmp = NULL;
 
-				if (BasicBlock *latchBlock = loop->getExitingBlock())
-				{
-					for (auto &lbInst : *latchBlock)
-					{
-						if (auto *exitingBranch = dyn_cast<BranchInst>(&lbInst))
-						{
-							// branch must have a condition (which sets the loop bound)
-							if (exitingBranch->isConditional())
-							{
-								cmp = dyn_cast<ICmpInst>(exitingBranch->getCondition());
-								if (cmp)
-								{
-									Value *op1 = cmp->getOperand(0);
-									Value *op2 = cmp->getOperand(1);
-									Value *loopBound = op1 == indVar ? op2 : (op2 == indVar ? op1 : NULL);
+				for(auto &bb : loop->getBlocksVector()){
+					for (auto &lbInst : *bb){
+						auto *exitingBranch = dyn_cast<BranchInst>(&lbInst);
+						if (exitingBranch){
+							//branch must have a condition (which sets the loop bound)
+							if (exitingBranch->isConditional()){		
+								cmp = dyn_cast<ICmpInst>(exitingBranch->getCondition());						
+								if (cmp){
+									Value *loopBound = cmp->getOperand(1);
 
-									// loop bound must be a constant. otherwise we can't vectorize
+									errs() << "cmp: " << *cmp << "\n";
 									if (loopBound != NULL){
-										auto *loopBoundConst = dyn_cast<ConstantInt>(loopBound);
-										if (loopBoundConst){
+										errs() << "loopBound: " << *loopBound << "\n";									
+										if (auto* loopBoundConst = dyn_cast<Instruction>(loopBound)){
+											
+										}
+										else if(auto* loopBoundConst = dyn_cast<ConstantInt>(loopBound)){
 											float loop_rate = 0;
 											loop_rate = InputLoopRate.getValue();
+											int value = (1 - loop_rate) * loopBoundConst->getZExtValue();
+											if(value <= 0) value = 1;
+
 											Type *ConstType = loopBound->getType();
-											Constant *NewInc = ConstantInt::get(ConstType, (1 - loop_rate) * loopBoundConst->getZExtValue() /*value*/, true /*issigned*/);
+											Constant *NewInc = ConstantInt::get(ConstType, value /*value*/, true /*issigned*/);
 											
 											for(auto &op : cmp->operands()){
 												if(op == indVar) continue;
-												//errs() << "Truncation -- Changing [" << *op << "] to [" << *NewInc << "]!\n";
+												errs() << "Truncation -- Changing [" << *op << "] to [" << *NewInc << "]!\n";
 												op = NewInc;
 											}
 										}
+										else
+											errs() << "loop bound type not found!" << "\n";
 									}
-									else
-										errs() << "no loop bound found!\n";
+									// else
+									// 	errs() << "no loop bound found!\n";
 								}
 							}
-							else 
-								errs() << "branch with no conditional!\n";
+							// else
+							// 	errs() << "exiting branch has no conditional!";
 						}
-						else 
-							errs() << "no exiting branch!\n";
+						// else
+						// 	errs() << "no exiting branch!\n";
 					}
-				}
-				else 
-					errs() << "no latchblock!\n";
+				}		
 			}
 		}
 
@@ -203,7 +202,7 @@ namespace
 					Type *ConstType = op->getType();
 					Constant *NewInc = ConstantInt::get(ConstType, loop_rate /*value*/, true /*issigned*/);
 
-					//errs() << "Modulo -- Changing [" << *op << "] to [" << *NewInc << "]!\n";
+					errs() << "Modulo -- Changing [" << *op << "] to [" << *NewInc << "]!\n";
 
 					op = NewInc;
 				}	
@@ -217,7 +216,6 @@ namespace
 
 		//perforate loop
 		void perforateLoops(){
-			errs() << InputLoopMethod.getValue() << "\n";
 			switch (InputLoopMethod.getValue()){
 			case 1:
 				perforateTruncation();
