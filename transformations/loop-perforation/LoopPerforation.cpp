@@ -6,6 +6,8 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 using namespace llvm;
 using namespace std;
@@ -109,6 +111,7 @@ namespace
 
 		//truncation perforation
 		void perforateTruncation(){
+			vector<Instruction *> vector_lb;
 			for (it_f_loop_map = f_loop_map.begin(); it_f_loop_map != f_loop_map.end(); ++it_f_loop_map){
 				auto loop = it_f_loop_map->first;
 				auto llvm_function = it_f_loop_map->second;
@@ -126,12 +129,34 @@ namespace
 								cmp = dyn_cast<ICmpInst>(exitingBranch->getCondition());						
 								if (cmp){
 									Value *loopBound = cmp->getOperand(1);
+									Value *op0 = cmp->getOperand(0);
 
-									errs() << "cmp: " << *cmp << "\n";
 									if (loopBound != NULL){
-										errs() << "loopBound: " << *loopBound << "\n";									
-										if (auto* loopBoundConst = dyn_cast<Instruction>(loopBound)){
+										errs() << "cmp: " << *cmp << "\n\n";
+										errs() << "loopBound: " << *loopBound << "\n\n";									
+										if (auto *loopBoundConst = dyn_cast<Instruction>(loopBound)){											
+
+											float loop_rate = 0;
+											loop_rate = InputLoopRate.getValue();
+											int value = (1 - loop_rate);
+											if(value <= 0) value = 1;
+											Type *ConstType = IntegerType::getInt32Ty(bb->getContext());
+											Constant *NewInc = ConstantInt::get(ConstType, value /*value*/, false /*issigned*/);
 											
+											Instruction *temp = BinaryOperator::CreateMul(loopBoundConst, NewInc, "");
+											bb->getInstList().insert(bb->getTerminator()->getIterator(), temp);
+
+											// Instruction *new_cmp = ICmpInst::Create(cmp->getOpcode(), cmp->getPredicate(),
+											// cmp->getOperand(0), temp, "", cmp->getParent());
+											//ReplaceInstWithInst(cmp, new_cmp);
+											
+											// for (auto &v : loopBoundConst->uses()) {
+											// 	User *user = v.getUser();  // A User is anything with operands.
+											// 	user->setOperand(v.getOperandNo(), temp);     
+											// }													
+											
+											errs() << "new loopBound: " << *temp << "\n";
+											errs() << "new cmp: " << *cmp << "\n";
 										}
 										else if(auto* loopBoundConst = dyn_cast<ConstantInt>(loopBound)){
 											float loop_rate = 0;
@@ -161,6 +186,9 @@ namespace
 						// else
 						// 	errs() << "no exiting branch!\n";
 					}
+					// for(auto *loopBoundConst : vector_lb){
+	
+					// }
 				}		
 			}
 		}
