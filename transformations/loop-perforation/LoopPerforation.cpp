@@ -8,6 +8,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#define LLVM_FLOAT_TY llvm::Type::getFloatTy(context)
 
 using namespace llvm;
 using namespace std;
@@ -128,35 +129,66 @@ namespace
 							if (exitingBranch->isConditional()){		
 								cmp = dyn_cast<ICmpInst>(exitingBranch->getCondition());						
 								if (cmp){
-									Value *loopBound = cmp->getOperand(1);
-									Value *op0 = cmp->getOperand(0);
+									Value* loopBound;
+									for(auto &op : cmp->operands()){
+										if(auto *iv = dyn_cast<PHINode>(&op)) indVar = iv;
+										else loopBound = op;
+									}
 
 									if (loopBound != NULL){
 										errs() << "cmp: " << *cmp << "\n\n";
 										errs() << "loopBound: " << *loopBound << "\n\n";									
-										if (auto *loopBoundConst = dyn_cast<Instruction>(loopBound)){											
+										if (auto *loopBoundConst = dyn_cast<Instruction>(loopBound)){	
 
-											float loop_rate = 0;
-											loop_rate = InputLoopRate.getValue();
-											int value = (1 - loop_rate);
-											if(value <= 0) value = 1;
-											Type *ConstType = IntegerType::getInt32Ty(bb->getContext());
-											Constant *NewInc = ConstantInt::get(ConstType, value /*value*/, false /*issigned*/);
-											
-											Instruction *temp = BinaryOperator::CreateMul(loopBoundConst, NewInc, "");
-											bb->getInstList().insert(bb->getTerminator()->getIterator(), temp);
+											errs() << "loopBoundConst: " << *loopBoundConst << "\n";
+											errs() << "indVar: " << *indVar << "\n";									
 
-											// Instruction *new_cmp = ICmpInst::Create(cmp->getOpcode(), cmp->getPredicate(),
-											// cmp->getOperand(0), temp, "", cmp->getParent());
-											//ReplaceInstWithInst(cmp, new_cmp);
+											//float y = (1 - perforation_rate)
+											float value = (1 - InputLoopRate.getValue());
+											//errs() << "value: " << value << "\n\n";
+											//if(v <= 0) v = 1;
+											auto *y = ConstantFP::get(Type::getFloatTy(bb->getContext()), value);					
+											errs() << "y: " << *y << "\n";
+
+											// (float)(loopBoundConst)
+											Instruction *loopBoundConst_float = SIToFPInst::Create(Instruction::CastOps::SIToFP, 
+											loopBoundConst,	Type::getFloatTy(bb->getContext()), "");
 											
-											// for (auto &v : loopBoundConst->uses()) {
-											// 	User *user = v.getUser();  // A User is anything with operands.
-											// 	user->setOperand(v.getOperandNo(), temp);     
-											// }													
+											loopBoundConst_float->insertAfter(loopBoundConst);
+
+											errs() << "loopBoundConst_float: " << *loopBoundConst_float << "\n";
 											
-											errs() << "new loopBound: " << *temp << "\n";
-											errs() << "new cmp: " << *cmp << "\n";
+											// float k = (y * loopBoundConst_float)
+											Instruction *k = BinaryOperator::CreateFMul(y, loopBoundConst_float, "");
+											k->insertAfter(loopBoundConst_float);
+
+											errs() << "k: " << *k << "\n";
+
+											//(int)(k)
+											Instruction *temp = FPToUIInst::Create(Instruction::CastOps::FPToUI, k,
+											Type::getInt32Ty(bb->getContext()), "");
+											temp->insertAfter(k);
+
+											errs() << "temp: " << *temp << "\n";
+
+											// // auto *zero = ConstantInt::get(Type::getInt32Ty(bb->getContext()), 0);					
+											// // errs() << "zero: " << *zero << "\n";
+
+											// // //int h = (int)(k)
+											// // Instruction *h = BinaryOperator::CreateAdd(temp, zero, "");
+											// // bb->getInstList().insert(bb->getFirstInsertionPt()->getIterator(), h);
+											
+											// //loopBoundConst->replaceAllUsesWith(temp);
+
+											for(auto &op : cmp->operands()){
+												if(op == indVar) continue;
+												errs() << "Truncation -- Changing [" << *op << "] to [" << *temp << "]!\n";
+												op = temp;
+											}
+											// //loopBoundConst->replaceAllUsesWith(temp);
+
+											errs() << "new_cmp" << *cmp << "\n\n";
+												
 										}
 										else if(auto* loopBoundConst = dyn_cast<ConstantInt>(loopBound)){
 											float loop_rate = 0;
@@ -169,15 +201,20 @@ namespace
 											
 											for(auto &op : cmp->operands()){
 												if(op == indVar) continue;
-												errs() << "Truncation -- Changing [" << *op << "] to [" << *NewInc << "]!\n";
+												errs() << "Truncation -- Changing [" << *op << "] to [" << *NewInc << "]!\n\n";
 												op = NewInc;
 											}
 										}
-										else
+										else if(auto* loopBoundConst = dyn_cast<Argument>(loopBound)){
+											//TODO
+											errs() << "loop bound type argument!" << "\n";
+										}
+										else{
 											errs() << "loop bound type not found!" << "\n";
+										}	
 									}
-									// else
-									// 	errs() << "no loop bound found!\n";
+									else
+										errs() << "no loop bound found!\n";
 								}
 							}
 							// else
