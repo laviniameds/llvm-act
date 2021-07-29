@@ -108,15 +108,15 @@ namespace
 
 		void perforateLoopBound(ICmpInst *cmp, Value* loopBound, PHINode *indVar, BasicBlock *bb){
 			errs() << "cmp: " << *cmp << "\n\n";
-			errs() << "loopBound: " << *loopBound << "\n\n";									
+			errs() << "loopBound: " << *loopBound << "\n\n";
+
+			//loop bound is a instruction									
 			if (auto *loopBoundConst = dyn_cast<Instruction>(loopBound)){	
 				errs() << "loopBoundConst: " << *loopBoundConst << "\n";
 				errs() << "indVar: " << *indVar << "\n";									
 
 				//float y = (1 - perforation_rate)
 				float value = (1 - InputLoopRate.getValue());
-				//errs() << "value: " << value << "\n\n";
-				//if(v <= 0) v = 1;
 				auto *y = ConstantFP::get(Type::getFloatTy(bb->getContext()), value);					
 				errs() << "y: " << *y << "\n";
 
@@ -141,25 +141,16 @@ namespace
 
 				errs() << "temp: " << *temp << "\n";
 
-				// // auto *zero = ConstantInt::get(Type::getInt32Ty(bb->getContext()), 0);					
-				// // errs() << "zero: " << *zero << "\n";
-
-				// // //int h = (int)(k)
-				// // Instruction *h = BinaryOperator::CreateAdd(temp, zero, "");
-				// // bb->getInstList().insert(bb->getFirstInsertionPt()->getIterator(), h);
-				
-				// //loopBoundConst->replaceAllUsesWith(temp);
-
 				for(auto &op : cmp->operands()){
 					if(op == indVar) continue;
 					errs() << "Truncation -- Changing [" << *op << "] to [" << *temp << "]!\n";
 					op = temp;
 				}
-				// //loopBoundConst->replaceAllUsesWith(temp);
 
 				errs() << "new_cmp" << *cmp << "\n\n";
 					
 			}
+			//loop bound is a int constant 
 			else if(auto* loopBoundConst = dyn_cast<ConstantInt>(loopBound)){
 				float loop_rate = 0;
 				loop_rate = InputLoopRate.getValue();
@@ -175,9 +166,46 @@ namespace
 					op = NewInc;
 				}
 			}
+			//loop bound is a argument
 			else if(auto* loopBoundConst = dyn_cast<Argument>(loopBound)){
 				//TODO
 				errs() << "loop bound type argument!" << "\n";
+				errs() << "loopBoundConst: " << *loopBoundConst << "\n";
+				errs() << "indVar: " << *indVar << "\n";									
+
+				//float y = (1 - perforation_rate)
+				float value = (1 - InputLoopRate.getValue());
+				auto *y = ConstantFP::get(Type::getFloatTy(bb->getContext()), value);					
+				errs() << "y: " << *y << "\n";
+
+				// (float)(loopBoundConst)
+				Instruction *loopBoundConst_float = SIToFPInst::Create(Instruction::CastOps::SIToFP, 
+				loopBoundConst,	Type::getFloatTy(bb->getContext()), "");
+				
+				loopBoundConst_float->insertBefore(cmp);
+
+				errs() << "loopBoundConst_float: " << *loopBoundConst_float << "\n";
+				
+				// float k = (y * loopBoundConst_float)
+				Instruction *k = BinaryOperator::CreateFMul(y, loopBoundConst_float, "");
+				k->insertAfter(loopBoundConst_float);
+
+				errs() << "k: " << *k << "\n";
+
+				//(int)(k)
+				Instruction *temp = FPToUIInst::Create(Instruction::CastOps::FPToUI, k,
+				Type::getInt32Ty(bb->getContext()), "");
+				temp->insertAfter(k);
+
+				errs() << "temp: " << *temp << "\n";
+
+				for(auto &op : cmp->operands()){
+					if(op == indVar) continue;
+					errs() << "Truncation -- Changing [" << *op << "] to [" << *temp << "]!\n";
+					op = temp;
+				}
+
+				errs() << "new_cmp" << *cmp << "\n\n";
 			}
 			else{
 				errs() << "loop bound type not found!" << "\n";
@@ -193,7 +221,7 @@ namespace
 				PHINode *indVar = loop->getCanonicalInductionVariable();
 				ICmpInst *cmp = NULL;
 
-				for(auto &bb : loop->getBlocksVector()){
+				//for(auto &bb : loop->getBlocksVector()){ //get nested loops
 					if (BasicBlock *latchBlock = loop->getExitingBlock()){
 						for (auto &lbInst : *latchBlock){
 							auto *exitingBranch = dyn_cast<BranchInst>(&lbInst);
@@ -217,7 +245,7 @@ namespace
 							}
 						}
 					}	
-				}	
+				//}	
 			}
 		}
 
