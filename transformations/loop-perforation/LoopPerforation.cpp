@@ -48,7 +48,10 @@ namespace
 			//check if the actual loop is a good candidate to perforate
 			if (isPerforable(llvm_function, loop)){
 				errs() << "That's a perforable loop: " << *loop << "!\n\n";
-				f_loop_map.insert({loop, &llvm_function});
+				if(f_loop_map.size() < 1)
+					f_loop_map.insert({loop, &llvm_function});
+				else 
+					return;
 			}
 
 			//check also the subloops into each loop
@@ -136,7 +139,7 @@ namespace
 
 				//(int)(k)
 				Instruction *temp = FPToUIInst::Create(Instruction::CastOps::FPToUI, k,
-				Type::getInt32Ty(bb->getContext()), "");
+				loopBoundConst->getType(), "");
 				temp->insertAfter(k);
 
 				errs() << "temp: " << *temp << "\n";
@@ -152,13 +155,11 @@ namespace
 			}
 			//loop bound is a int constant 
 			else if(auto* loopBoundConst = dyn_cast<ConstantInt>(loopBound)){
-				float loop_rate = 0;
-				loop_rate = InputLoopRate.getValue();
-				int value = (1 - loop_rate) * loopBoundConst->getZExtValue();
-				if(value <= 0) value = 1;
+				float value = (1 - InputLoopRate.getValue());
+				int loop_rate = (ceil)(value * loopBoundConst->getZExtValue());
 
 				Type *ConstType = loopBound->getType();
-				Constant *NewInc = ConstantInt::get(ConstType, value /*value*/, true /*issigned*/);
+				Constant *NewInc = ConstantInt::get(ConstType, loop_rate /*value*/, true /*issigned*/);
 				
 				for(auto &op : cmp->operands()){
 					if(op == indVar) continue;
@@ -192,9 +193,11 @@ namespace
 
 				errs() << "k: " << *k << "\n";
 
+				
+
 				//(int)(k)
 				Instruction *temp = FPToUIInst::Create(Instruction::CastOps::FPToUI, k,
-				Type::getInt32Ty(bb->getContext()), "");
+				loopBoundConst->getType(), "");
 				temp->insertAfter(k);
 
 				errs() << "temp: " << *temp << "\n";
@@ -298,6 +301,10 @@ namespace
 		// void perforateRandom(){ 	
 		// }
 
+		void handleTooManyLoops(){
+			errs() << "LOOP QTD: " << f_loop_map.size() << "\n\n";
+		}
+
 		//perforate loop
 		void perforateLoops(){
 			switch (InputLoopMethod.getValue()){
@@ -328,6 +335,9 @@ namespace
 				for (auto &loop : loop_info){
 					processLoop(llvm_function, loop);
 				}
+
+				//handle too many loops
+				handleTooManyLoops();
 
 				perforateLoops();
 			}
