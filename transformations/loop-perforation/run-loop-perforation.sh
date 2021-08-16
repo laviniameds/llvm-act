@@ -32,7 +32,7 @@ for src in $files; do
     filename=${dir_path}/${src_base%.*}.ll
     opt=${dir_path}/${src_base%.*}.opt.ll
     clang-12 -x c++ -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${filename}
-    opt-12 -S -mem2reg ${filename} > ${opt}
+    opt-12 -S -mem2reg -loop-simplify ${filename} > ${opt}
 
     # if [ "${base_src_dir}" == "${base_filename%.*}" ]
     # then
@@ -40,7 +40,8 @@ for src in $files; do
         for i in $rates; do
             dir_path="${src_dir}/loop_perforation_results/$i"
             mkdir -p $dir_path
-            opt_perf=${dir_path}/${src_base%.*}_${i}.opt.ll           
+            opt_perf=${dir_path}/${src_base%.*}_${i}.opt.ll    
+            #echo $opt_perf       
             opt-12 -S -load build/transformations/loop-perforation/libLoopPerforationPass.so -loop-perforation -loop_rate=$i -loop_method=$loop_method < ${opt} > ${opt_perf}      
             #opt-12 -analyze -dot-cfg ${opt}
             echo "Loop Perforation done! You can find results in ${dir_path}"        

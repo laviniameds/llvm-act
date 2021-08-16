@@ -44,35 +44,39 @@ namespace
 		}
 
 		//process a loop
-		void processLoop(Function &llvm_function, Loop *loop){
+		void processLoop(Function &llvm_function, Loop *loop, ScalarEvolution &se){
 			//check if the actual loop is a good candidate to perforate
-			if (isPerforable(llvm_function, loop)){
+			if (isPerforable(llvm_function, loop, se)){
 				errs() << "That's a perforable loop: " << *loop << "!\n\n";
-				if(f_loop_map.size() < 1)
+				//if(f_loop_map.size() < 1)
 					f_loop_map.insert({loop, &llvm_function});
-				else 
+				//else 
 					return;
 			}
 
 			//check also the subloops into each loop
 			for (Loop *sub_loop : loop->getSubLoops()){
-				processLoop(llvm_function, sub_loop);
+				processLoop(llvm_function, sub_loop, se);
 			}
 		}
 
 		//return true or false if a loop is perforable
 		//TODO: check perforation for loop bounds
-		bool isPerforable(Function &llvm_function, Loop *loop){
+		bool isPerforable(Function &llvm_function, Loop *loop, ScalarEvolution &se){
 			//check if loop is simple
-			if (!loop->isLoopSimplifyForm())
+			if (!loop->isLoopSimplifyForm()){
+				errs() << "Not a simple loop" << "\n";
 				return false;
+			}
 
 			//get the PHI node correspondent to the canonical induction variable
 			PHINode *PHI = loop->getCanonicalInductionVariable();
 
 			//if it's null, return false
-			if (PHI == nullptr)
+			if (PHI == nullptr){
+				errs() << "PHI is null" << "\n";
 				return false;
+			}
 			
 			//"find where the induction variable is modified by finding a user that
 			// is also an incoming value to the phi"
@@ -99,12 +103,16 @@ namespace
 			}
 
 			//if it's null, return false
-			if (value_to_change == nullptr)
+			if (value_to_change == nullptr){
+				errs() << "null value to change" << "\n";
 				return false;
+			}
 
 			//if it's not a binary operator, return false
-			if (!llvm::dyn_cast<llvm::BinaryOperator>(value_to_change))
+			if (!llvm::dyn_cast<llvm::BinaryOperator>(value_to_change)){
+				errs() << "not a binary operator" << "\n";
 				return false;
+			}
 
 			return true;
 		}
@@ -302,7 +310,7 @@ namespace
 		// }
 
 		void handleTooManyLoops(){
-			errs() << "LOOP QTD: " << f_loop_map.size() << "\n\n";
+			//errs() << "LOOP QTD: " << f_loop_map.size() << "\n\n";
 		}
 
 		//perforate loop
@@ -329,11 +337,11 @@ namespace
 				f_loop_map.clear();
 
 				LoopInfo &loop_info = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-				//ScalarEvolution *se = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
+				ScalarEvolution &se = getAnalysis<ScalarEvolutionWrapperPass>().getSE();
 
 				//handle the loops into every function
 				for (auto &loop : loop_info){
-					processLoop(llvm_function, loop);
+					processLoop(llvm_function, loop, se);
 				}
 
 				//handle too many loops

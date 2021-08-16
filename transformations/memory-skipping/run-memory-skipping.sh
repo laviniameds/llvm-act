@@ -30,7 +30,7 @@ for src in $files; do
     opt=${dir_path}/${src_base%.*}.opt.ll
     #filename_perf=${dir_path}/${src_base}_${i}.ll
     clang-12 -x c++ -S -emit-llvm ${src} -g3 -O0 -Xclang -disable-O0-optnone -o ${filename}
-    opt-12 -S -mem2reg ${filename} > ${opt}
+    opt-12 -S -mem2reg -loop-simplify ${filename} > ${opt}
 
     for i in $rates; do
         dir_path="${src_dir}/memory_skipping_results/$i"
