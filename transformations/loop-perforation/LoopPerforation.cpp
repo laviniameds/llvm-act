@@ -48,9 +48,10 @@ namespace
 			//check if the actual loop is a good candidate to perforate
 			if (isPerforable(llvm_function, loop, se)){
 				errs() << "That's a perforable loop: " << *loop << "!\n\n";
-				//if(f_loop_map.size() < 1)
+				//LIMIT LOOPS TO 1
+				if(f_loop_map.size() < 1)
 					f_loop_map.insert({loop, &llvm_function});
-				//else 
+				else 
 					return;
 			}
 
@@ -309,10 +310,6 @@ namespace
 		// void perforateRandom(){ 	
 		// }
 
-		void handleTooManyLoops(){
-			//errs() << "LOOP QTD: " << f_loop_map.size() << "\n\n";
-		}
-
 		//perforate loop
 		void perforateLoops(){
 			switch (InputLoopMethod.getValue()){
@@ -332,22 +329,21 @@ namespace
 		{
 			if (!llvm_function.getName().equals_lower("main"))
 			{
-				//errs() << "I saw a function called " << llvm_function.getName() << "!\n";
+				errs() << "I saw a function called " << llvm_function.getName() << 
+				" in " << llvm_function.getParent()->getSourceFileName() << "!\n";
 
 				f_loop_map.clear();
 
 				LoopInfo &loop_info = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
 				ScalarEvolution &se = getAnalysis<ScalarEvolutionWrapperPass>().getSE();
 
-				//handle the loops into every function
-				for (auto &loop : loop_info){
-					processLoop(llvm_function, loop, se);
+				if(InputLoopRate.getValue() != 0.0F){
+					//handle the loops into every function
+					for (auto &loop : loop_info){
+						processLoop(llvm_function, loop, se);
+					}
+					perforateLoops();
 				}
-
-				//handle too many loops
-				handleTooManyLoops();
-
-				perforateLoops();
 			}
 
 			return false;
