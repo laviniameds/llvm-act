@@ -4,7 +4,7 @@ namespace act {
 
 std::string opUtil::getInstructionName(const unsigned llvm_opCpde){
     if(llvm_opCpde >= llvm::Instruction::BinaryOps::BinaryOpsBegin && llvm_opCpde < llvm::Instruction::BinaryOpsEnd){
-        return "Binary";
+        return getBinaryName(llvm_opCpde);
     }
     else if (llvm_opCpde >= llvm::Instruction::TermOpsBegin && llvm_opCpde < llvm::Instruction::TermOpsEnd){
         return "Control Flow";

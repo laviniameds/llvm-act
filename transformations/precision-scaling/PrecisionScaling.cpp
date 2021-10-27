@@ -30,8 +30,37 @@ namespace {
 			AU.addRequired<LoopInfoWrapperPass>();
 		}
 
+		// Constant *ConstantFoldSSEConvertToInt(const APFloat &Val, bool roundTowardZero, Type *Ty) {
+		// 	// All of these conversion intrinsics form an integer of at most 64bits.
+		// 	unsigned ResultWidth = Ty->getIntegerBitWidth();
+		// 	assert(ResultWidth <= 64 && "Can only constant fold conversions to 64 and 32 bit ints");
+
+		// 	uint64_t UIntVal;
+		// 	bool isExact = false;
+		// 	APFloat::roundingMode mode = roundTowardZero? APFloat::rmTowardZero
+		// 												: APFloat::rmNearestTiesToEven;
+		// 	APFloat::opStatus status = Val.convertToInteger(&UIntVal, ResultWidth, /*isSigned=*/true, mode,	&isExact);
+		// 	if (status != APFloat::opOK && (!roundTowardZero || status != APFloat::opInexact))
+		// 		return nullptr;
+			
+		// 	return ConstantInt::get(Ty, UIntVal, /*isSigned=*/true);
+		// }
+
 		void reduce_float(Instruction* I){
 			errs() << "TODO: reduce float =>" << *I << "\n";
+
+			// //convert instruction: int16 k = (int16) return value
+			// Instruction *temp = FPToSIInst::Create(Instruction::CastOps::FPToSI, return_inst->getReturnValue(),
+			// Type::getInt16Ty(I->getContext()), "");
+			// temp->insertBefore(return_inst);
+			// errs() << "temp: " << *temp << "\n";
+			// //replace	
+			// for(auto &op : I->operands()){
+			// 	errs() << "op: " << *op << "\n";
+			// 	errs() << "CHANGING [" << *op << "] TO [" << *temp << "]\n";
+			// 	op = temp;
+			// }
+			// errs() << "reduce float =>" << *I << "\n";
 		}
 
 		void reduce_integer(Instruction* I){
@@ -40,11 +69,11 @@ namespace {
 
 		void reduce_precision(){
 			while (!I_set.empty()){
-				errs() << "size: " << I_set.size() << "\n";
-				auto I = dyn_cast<llvm::ReturnInst>(*I_set.begin());
+				auto I = *I_set.begin();
 				I_set.erase(I_set.begin());
-				FP_type = I->getReturnValue()->getType()->isDoubleTy();
-				Int_type = I->getReturnValue()->getType()->isIntegerTy();
+				
+				FP_type = I->getType()->isFloatingPointTy();
+				Int_type = I->getType()->isIntegerTy();
 
 				if (FP_type){
 					reduce_float(I);
@@ -57,7 +86,7 @@ namespace {
 		}
 
 		void filter_instructions(Instruction *I){
-			auto return_inst = dyn_cast<llvm::ReturnInst>(I);
+			auto return_inst = dyn_cast<BinaryOperator>(I);
 			if (return_inst){		
 				I_set.insert(I);				
 			}
