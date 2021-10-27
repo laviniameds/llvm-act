@@ -10,6 +10,7 @@
 #include "../../util/opUtil.hpp"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
+#define LLVM_FLOAT_TY llvm::Type::getFloatTy(context)
 
 using namespace llvm;
 using namespace act;
@@ -49,11 +50,17 @@ namespace {
 		void reduce_float(Instruction* I){
 			errs() << "TODO: reduce float =>" << *I << "\n";
 
-			// //convert instruction: int16 k = (int16) return value
-			// Instruction *temp = FPToSIInst::Create(Instruction::CastOps::FPToSI, return_inst->getReturnValue(),
-			// Type::getInt16Ty(I->getContext()), "");
-			// temp->insertBefore(return_inst);
-			// errs() << "temp: " << *temp << "\n";
+			//convert instruction: int16 k = (int16) return value
+			Instruction *temp = FPToSIInst::Create(Instruction::CastOps::FPToSI, I,
+			Type::getInt16Ty(I->getContext()), "");
+			temp->insertAfter(I);
+			errs() << "temp: " << *temp << "\n";
+			Instruction *new_inst = SIToFPInst::Create(Instruction::CastOps::SIToFP, temp,
+			I->getType(), "");
+			new_inst->insertAfter(temp);
+			errs() << "new_inst: " << *new_inst << "\n";
+			I->replaceUsesOutsideBlock(new_inst, I->getParent());
+
 			// //replace	
 			// for(auto &op : I->operands()){
 			// 	errs() << "op: " << *op << "\n";
@@ -71,7 +78,7 @@ namespace {
 			while (!I_set.empty()){
 				auto I = *I_set.begin();
 				I_set.erase(I_set.begin());
-				
+
 				FP_type = I->getType()->isFloatingPointTy();
 				Int_type = I->getType()->isIntegerTy();
 
