@@ -2,6 +2,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/PassManager.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Passes/PassBuilder.h"
@@ -31,47 +32,60 @@ namespace {
 			AU.addRequired<LoopInfoWrapperPass>();
 		}
 
-		// Constant *ConstantFoldSSEConvertToInt(const APFloat &Val, bool roundTowardZero, Type *Ty) {
-		// 	// All of these conversion intrinsics form an integer of at most 64bits.
-		// 	unsigned ResultWidth = Ty->getIntegerBitWidth();
-		// 	assert(ResultWidth <= 64 && "Can only constant fold conversions to 64 and 32 bit ints");
+		Constant* ConstantFoldSSEConvertToInt(const APFloat &Val, bool roundTowardZero, Type *Ty) {
+			// All of these conversion intrinsics form an integer of at most 64bits.
+			unsigned ResultWidth = Ty->getIntegerBitWidth();
+			assert(ResultWidth <= 64 && "Can only constant fold conversions to 64 and 32 bit ints");
 
-		// 	uint64_t UIntVal;
-		// 	bool isExact = false;
-		// 	APFloat::roundingMode mode = roundTowardZero? APFloat::rmTowardZero
-		// 												: APFloat::rmNearestTiesToEven;
-		// 	APFloat::opStatus status = Val.convertToInteger(&UIntVal, ResultWidth, /*isSigned=*/true, mode,	&isExact);
-		// 	if (status != APFloat::opOK && (!roundTowardZero || status != APFloat::opInexact))
-		// 		return nullptr;
+			uint64_t UIntVal;
+			bool isExact = false;
+			APFloat::roundingMode mode = roundTowardZero? APFloat::rmTowardZero
+														: APFloat::rmNearestTiesToEven;
+			APFloat::opStatus status = Val.convertToInteger(UIntVal, ResultWidth, /*isSigned=*/true, mode,	&isExact);
+			if (status != APFloat::opOK && (!roundTowardZero || status != APFloat::opInexact))
+				return nullptr;
 			
-		// 	return ConstantInt::get(Ty, UIntVal, /*isSigned=*/true);
-		// }
-
-		void reduce_float(Instruction* I){
-			errs() << "TODO: reduce float =>" << *I << "\n";
-
-			//convert instruction: int16 k = (int16) return value
-			Instruction *temp = FPToSIInst::Create(Instruction::CastOps::FPToSI, I,
-			Type::getInt16Ty(I->getContext()), "");
-			temp->insertAfter(I);
-			errs() << "temp: " << *temp << "\n";
-			Instruction *new_inst = SIToFPInst::Create(Instruction::CastOps::SIToFP, temp,
-			I->getType(), "");
-			new_inst->insertAfter(temp);
-			errs() << "new_inst: " << *new_inst << "\n";
-			I->replaceUsesOutsideBlock(new_inst, I->getParent());
-
-			// //replace	
-			// for(auto &op : I->operands()){
-			// 	errs() << "op: " << *op << "\n";
-			// 	errs() << "CHANGING [" << *op << "] TO [" << *temp << "]\n";
-			// 	op = temp;
-			// }
-			// errs() << "reduce float =>" << *I << "\n";
+			return ConstantInt::get(Ty, UIntVal, /*isSigned=*/true);
 		}
 
-		void reduce_integer(Instruction* I){
-			errs() << "TODO: reduce integer =>" << *I << "\n";
+		Type* getHalfType(Instruction &I){
+			switch (I.getType()->getScalarSizeInBits()){
+			case 16:
+				return Type::getInt8Ty(I.getContext());
+				break;	
+			default:
+				return Type::getInt64Ty(I.getContext());	
+				break;
+			}
+		}
+
+		void reduce_float(Instruction *I){
+			// float v = 0.5;
+			// auto *f_value = ConstantFP::get(I->getType(), v);					
+			
+			// Instruction *FAdd = BinaryOperator::CreateFAdd(f_value, I, "");
+			// I->insertAfter(FAdd);
+
+			Instruction *fptoint = FPToSIInst::Create(Instruction::CastOps::FPToSI, I, 
+			getHalfType(*I), "");
+			fptoint->insertAfter(I);
+			//errs() << "fptoint: " << *fptoint << "\n";
+
+			Instruction *inttofp = SIToFPInst::Create(Instruction::CastOps::SIToFP, fptoint, 
+			I->getType(), "");
+			inttofp->insertAfter(fptoint);
+			//errs() << "inttofp: " << *inttofp << "\n";
+	
+			for(auto user : I->users()){
+				if((user != fptoint) && (user != inttofp)){
+					for(auto &op : user->operands()){
+						if(op == I){
+							errs() << "CHANGING [" << *op << "]" << " TO [" << *inttofp << "]\n";
+							op = inttofp;
+						}
+					}
+				}
+			}
 		}
 
 		void reduce_precision(){
@@ -85,10 +99,7 @@ namespace {
 				if (FP_type){
 					reduce_float(I);
 				}
-				else if(Int_type){
-					reduce_integer(I);
-				}	
-				else errs() << "not int ot FP\n";
+				else errs() << "not FP\n";
 			}
 		}
 
