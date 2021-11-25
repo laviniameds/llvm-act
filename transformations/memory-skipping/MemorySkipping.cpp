@@ -20,6 +20,7 @@ namespace {
 	struct MemorySkippingPass : public ModulePass {
 
 		std::map <LoadInst*, Function*> load_inst_map;
+		std::map <LoadInst*, Function*>::iterator it_load_inst_mapp;
 		
 		//define pass ID
 		static char ID;
@@ -33,30 +34,56 @@ namespace {
 			//AU.addRequiredID(LoopSimplifyID);
 		}
 
+		void removeLoadValues(){
+			errs() << "SIZE LOAD INST MAP: " << load_inst_map.size() << "\n";
+			int size = load_inst_map.size()*InputLoopRate.getValue();
+			it_load_inst_mapp = load_inst_map.begin();
+			for(int i = 0; i < size; i++){
+					LoadInst *LI = it_load_inst_mapp->first;
+					errs() << "\n\nFunction: " << LI->getName() << "\n\n";
+					errs() << "\n\nINST: " << *LI << "TYPE: " << *LI->getType() << "\n\n";
+					Constant *value = NULL;
+
+					if(LI->getOperand(0) != NULL){
+						if(LI->getType()->isFloatTy()){
+							float v = 1;
+							value = ConstantFP::get(LI->getType(), v);
+						}
+						if(LI->getType()->isIntegerTy()){
+							int v = 1;
+							value = ConstantInt::get(LI->getType(), v);					
+						}
+						else {
+							errs() << "LOAD INST NOT FLOAT OR INT TYPE" << "\n";
+						}
+						if(value != NULL){
+							errs() << "REPLACING " << *LI << " USES WITH " << *value << "\n";
+							LI->replaceAllUsesWith(value);
+							LI->eraseFromParent();
+						}
+					}	
+					it_load_inst_mapp++;
+			}
+		}
+
 		virtual bool runOnModule(Module &llvm_module){
-			for (auto &F : llvm_module.getFunctionList()){
-				for (auto &BB : F.getBasicBlockList()){				
-					for (auto &I : BB.getInstList()){
-						auto *load_inst = llvm::dyn_cast<llvm::LoadInst>(&I);
-						if(load_inst && load_inst->isSafeToRemove() && 
-						!load_inst->isVolatile() && load_inst->hasNUndroppableUses(0)){
-							if(load_inst_map.find(load_inst) != load_inst_map.end())
-								break;
-							else
-								load_inst_map.insert({load_inst, &F});						
-							// load_inst->eraseFromParent();
-							// errs() << *load_inst << "was erased\n";
+			if(InputLoopRate.getValue() != 0.0F){
+				for (auto &F : llvm_module.getFunctionList()){
+					for (auto &BB : F.getBasicBlockList()){				
+						for (auto &I : BB.getInstList()){
+							auto *load_inst = llvm::dyn_cast<llvm::LoadInst>(&I);
+							auto *const_inst = llvm::dyn_cast<llvm::Constant>(&I);
+							if(load_inst){
+								if(load_inst->getType()->isFloatTy() || load_inst->getType()->isIntegerTy())
+									load_inst_map.insert({load_inst, &F});						
+							}
 						}
 					}
-				}
+				}	
+				removeLoadValues();
 			}
-			for(auto &it : load_inst_map){
-				errs() << "\n\nFunction: " << it.second->getName() << "\n\n";
-				errs() << "This 'load' can be erased: " << *it.first << "\n";
-			}
-
 			return false;
-		}		
+		}	
 	};
 
 } // namespace llvm
