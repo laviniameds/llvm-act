@@ -8,7 +8,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#define LLVM_FLOAT_TY llvm::Type::getFloatTy(context)
 
 using namespace llvm;
 using namespace std;
@@ -325,10 +324,8 @@ namespace
 			}
 		}
 
-		virtual bool runOnFunction(Function &llvm_function)
-		{
-			if (!llvm_function.getName().equals_lower("main"))
-			{
+		virtual bool runOnFunction(Function &llvm_function)		{
+			//if (!llvm_function.getName().equals_lower("main"))		{
 				errs() << "I saw a function called " << llvm_function.getName() << 
 				" in " << llvm_function.getParent()->getSourceFileName() << "!\n";
 
@@ -344,8 +341,7 @@ namespace
 					}
 					perforateLoops();
 				}
-			}
-
+			//}
 			return false;
 		}
 	};
