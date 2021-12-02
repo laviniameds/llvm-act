@@ -48,10 +48,10 @@ namespace
 			if (isPerforable(llvm_function, loop, se)){
 				errs() << "That's a perforable loop: " << *loop << "!\n\n";
 				//LIMIT LOOPS TO 1
-				if(f_loop_map.size() < 1)
+				//if(f_loop_map.size() < 1)
 					f_loop_map.insert({loop, &llvm_function});
-				else 
-					return;
+				// else 
+				// 	return;
 			}
 
 			//check also the subloops into each loop

@@ -19,8 +19,8 @@ namespace {
 	//define llvm pass
 	struct MemorySkippingPass : public ModulePass {
 
-		std::map <LoadInst*, Function*> load_inst_map;
-		std::map <LoadInst*, Function*>::iterator it_load_inst_mapp;
+		std::map <BasicBlock*, LoadInst*> load_inst_map;
+		std::map <BasicBlock*, LoadInst*>::iterator it_load_inst_map;
 		
 		//define pass ID
 		static char ID;
@@ -37,32 +37,37 @@ namespace {
 		void removeLoadValues(){
 			errs() << "SIZE LOAD INST MAP: " << load_inst_map.size() << "\n";
 			int size = load_inst_map.size()*InputLoopRate.getValue();
-			it_load_inst_mapp = load_inst_map.begin();
-			for(int i = 0; i < size; i++){
-					LoadInst *LI = it_load_inst_mapp->first;
-					errs() << "\n\nFunction: " << LI->getName() << "\n\n";
-					errs() << "\n\nINST: " << *LI << "TYPE: " << *LI->getType() << "\n\n";
-					Constant *value = NULL;
+			int k = 0;
+			it_load_inst_map = load_inst_map.begin();
+			for(int i = 0; i < size/2; i++){
+				while (k < 2 && it_load_inst_map != load_inst_map.end()){
+					it_load_inst_map++;
+					k++;
+				}	
+				k = 0;			
+				LoadInst *LI = it_load_inst_map->second;
+				errs() << "\n\nFunction: " << LI->getName() << "\n\n";
+				errs() << "\n\nINST: " << *LI << "TYPE: " << *LI->getType() << "\n\n";
+				Constant *value = NULL;
 
-					if(LI->getOperand(0) != NULL){
-						if(LI->getType()->isFloatTy()){
-							float v = 1;
-							value = ConstantFP::get(LI->getType(), v);
-						}
-						if(LI->getType()->isIntegerTy()){
-							int v = 1;
-							value = ConstantInt::get(LI->getType(), v);					
-						}
-						else {
-							errs() << "LOAD INST NOT FLOAT OR INT TYPE" << "\n";
-						}
-						if(value != NULL){
-							errs() << "REPLACING " << *LI << " USES WITH " << *value << "\n";
-							LI->replaceAllUsesWith(value);
-							LI->eraseFromParent();
-						}
-					}	
-					it_load_inst_mapp++;
+				if(LI->getOperand(0) != NULL){
+					if(LI->getType()->isFloatTy()){
+						float v = 1;
+						value = ConstantFP::get(LI->getType(), v);
+					}
+					if(LI->getType()->isIntegerTy()){
+						int v = 1;
+						value = ConstantInt::get(LI->getType(), v);					
+					}
+					else {
+						errs() << "LOAD INST NOT FLOAT OR INT TYPE" << "\n";
+					}
+					if(value != NULL){
+						errs() << "REPLACING " << *LI << " USES WITH " << *value << "\n";
+						LI->replaceAllUsesWith(value);
+						LI->eraseFromParent();
+					}
+				}	
 			}
 		}
 
@@ -75,7 +80,7 @@ namespace {
 							auto *const_inst = llvm::dyn_cast<llvm::Constant>(&I);
 							if(load_inst){
 								if(load_inst->getType()->isFloatTy() || load_inst->getType()->isIntegerTy())
-									load_inst_map.insert({load_inst, &F});						
+									load_inst_map.insert({&BB, load_inst});						
 							}
 						}
 					}
