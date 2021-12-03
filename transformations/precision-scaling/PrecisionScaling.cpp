@@ -25,8 +25,8 @@ static cl::opt<float> InputLoopRate("loop_rate",
 namespace {
 	//define llvm pass
 	struct PrecisionScalingPass : public ModulePass {
-		std::set<Instruction*> I_set;
-		std::set<Instruction*>::iterator it_I_set;
+		std::map <BasicBlock*, Instruction*> I_set;
+		std::map <BasicBlock*, Instruction*>::iterator it_I_set;
 		bool FP_type, Int_type;
 		
 		//define pass ID
@@ -109,16 +109,14 @@ namespace {
 		void reduce_precision(){
 			errs() << "SIZE LOAD INST MAP: " << I_set.size() << "\n";
 			int size = I_set.size()*InputLoopRate.getValue();
+			if(I_set.size() > 2)
+				size = (I_set.size()*InputLoopRate.getValue())/2;
+				
 			int k = 0;
 			it_I_set = I_set.begin();
 
-			for(int i = 0; i < size/2; i++){
-				while (k < 2 && it_I_set != I_set.end()){
-					it_I_set++;
-					k++;
-				}	
-				k = 0;
-				auto I = *it_I_set;
+			for(int i = 0; i < size; i++){
+				auto I = it_I_set->second;
 
 				FP_type = I->getType()->isFloatingPointTy();
 				Int_type = I->getType()->isIntegerTy();
@@ -126,13 +124,21 @@ namespace {
 				if (FP_type){
 					reduce_float(I);
 				}
+				if(size > 2){
+					while (k < 2 && it_I_set != I_set.end()){
+						it_I_set++;
+						k++;
+					}	
+					k = 0;
+				}
+				else it_I_set++;
 			}
 		}
 
 		void filter_instructions(Instruction *I){
 			auto binary_inst = dyn_cast<BinaryOperator>(I);
-			if(binary_inst){	
-				I_set.insert(I);		
+			if(binary_inst && binary_inst->getType()->isFloatingPointTy()){	
+				I_set.insert({I->getParent(),I});		
 			}
 		}
 
@@ -142,10 +148,10 @@ namespace {
 					for (auto &BB : F.getBasicBlockList()){				
 						for (auto &I : BB.getInstList()){
 							filter_instructions(&I);
-							reduce_precision();
 						}
 					}
 				}
+				reduce_precision();
 			}
 
 			return false;

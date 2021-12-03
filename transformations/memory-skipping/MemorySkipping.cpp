@@ -18,7 +18,6 @@ cl::value_desc("loop_rate"));
 namespace {
 	//define llvm pass
 	struct MemorySkippingPass : public ModulePass {
-
 		std::map <BasicBlock*, LoadInst*> load_inst_map;
 		std::map <BasicBlock*, LoadInst*>::iterator it_load_inst_map;
 		
