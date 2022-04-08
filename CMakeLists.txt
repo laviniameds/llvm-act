@@ -10,8 +10,8 @@ include_directories(${LLVM_INCLUDE_DIRS})
 link_directories(${LLVM_LIBRARY_DIRS})
 
 # Use your pass name here.
-add_subdirectory(analysis/profiling)
+add_subdirectory(analysis/profiler)
 add_subdirectory(transformations/loop-perforation)
 add_subdirectory(transformations/memory-skipping)
 add_subdirectory(transformations/precision-scaling)
-add_subdirectory(transformations/float2int)
+#add_subdirectory(transformations/float2int)
